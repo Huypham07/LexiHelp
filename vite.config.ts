@@ -1,0 +1,26 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
+import { resolve } from 'path'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        background: resolve(__dirname, 'src/background/background.ts'),
+        content: resolve(__dirname, 'src/content/content.tsx'),
+      },
+      output: {
+        entryFileNames: (chunk) => {
+          return chunk.name === 'background' ? 'src/background.js' :
+            chunk.name === 'content' ? 'src/content.js' :
+              'assets/[name]-[hash].js';
+        },
+      },
+    },
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
+})
