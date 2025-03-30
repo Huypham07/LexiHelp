@@ -21,10 +21,9 @@ const Header: React.FC<HeaderProps> = ({ extensionEnabled, setExtensionEnabled }
           </CardDescription>
         </div>
         <Switch
-          id="extension-toggle"
+          className="cursor-pointer"
           checked={extensionEnabled}
           onCheckedChange={setExtensionEnabled}
-          className="switch"
           size="large"
         />
       </div>

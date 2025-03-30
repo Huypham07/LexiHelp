@@ -14,8 +14,8 @@ interface TabsSectionProps {
   setLineHeight: (value: number) => void;
   wordSpacing: number;
   setWordSpacing: (value: number) => void;
-  bionic: boolean;
-  setBionic: (value: boolean) => void;
+  ttsHighlight: boolean;
+  setTtsHighlight: (value: boolean) => void;
   ruler: boolean;
   setRuler: (value: boolean) => void;
   colorTheme: string;
@@ -31,8 +31,8 @@ const TabsSection: React.FC<TabsSectionProps> = ({
   setLineHeight,
   wordSpacing,
   setWordSpacing,
-  bionic,
-  setBionic,
+  ttsHighlight,
+  setTtsHighlight,
   ruler,
   setRuler,
   colorTheme,
@@ -81,7 +81,7 @@ const TabsSection: React.FC<TabsSectionProps> = ({
       </TabsContent>
 
       <TabsContent value="tools">
-        <ToolsTab bionic={bionic} setBionic={setBionic} />
+        <ToolsTab ttsHighlight={ttsHighlight} setTtsHighlight={setTtsHighlight} />
       </TabsContent>
     </Tabs>
   );

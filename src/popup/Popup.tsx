@@ -10,7 +10,7 @@ const Popup: React.FC = () => {
   const [letterSpacing, setLetterSpacing] = useState(1);
   const [lineHeight, setLineHeight] = useState(1.5);
   const [wordSpacing, setWordSpacing] = useState(1);
-  const [bionic, setBionic] = useState(false);
+  const [ttsHighlight, setTtsHighlight] = useState(false);
   const [ruler, setRuler] = useState(false);
   const [extensionEnabled, setExtensionEnabled] = useState(true);
   const [colorTheme, setColorTheme] = useState("cream");
@@ -29,8 +29,8 @@ const Popup: React.FC = () => {
             setLineHeight={setLineHeight}
             wordSpacing={wordSpacing}
             setWordSpacing={setWordSpacing}
-            bionic={bionic}
-            setBionic={setBionic}
+            ttsHighlight={ttsHighlight}
+            setTtsHighlight={setTtsHighlight}
             ruler={ruler}
             setRuler={setRuler}
             colorTheme={colorTheme}
@@ -41,7 +41,7 @@ const Popup: React.FC = () => {
             letterSpacing={letterSpacing}
             lineHeight={lineHeight}
             wordSpacing={wordSpacing}
-            bionic={bionic}
+            ttsHighlight={ttsHighlight}
             ruler={ruler}
             colorTheme={colorTheme}
           />

@@ -3,7 +3,7 @@ interface PreviewProps {
   letterSpacing: number;
   lineHeight: number;
   wordSpacing: number;
-  bionic: boolean;
+  ttsHighlight: boolean;
   ruler: boolean;
   colorTheme: string;
 }
@@ -13,7 +13,7 @@ const Preview: React.FC<PreviewProps> = ({
   letterSpacing,
   lineHeight,
   wordSpacing,
-  bionic,
+  ttsHighlight,
   ruler,
   colorTheme,
 }) => {
@@ -45,7 +45,7 @@ const Preview: React.FC<PreviewProps> = ({
           wordSpacing: `${wordSpacing * 0.1}em`,
           color: colorTheme === "dark" ? "#fff" : "#333",
         }}>
-        {bionic ? (
+        {ttsHighlight ? (
           "This is how your text will look with the current settings."
         ) : (
           "This is how your text will look with the current settings."
