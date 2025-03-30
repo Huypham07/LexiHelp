@@ -1,6 +1,10 @@
 # LexiHelp
 
 A browser extension to help people with dyslexia read web content more easily.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/51d91769-cdb4-4ad0-a27e-b2b1803bb2b4" width="250" />
+</p>
+
 
 ## Features
 
