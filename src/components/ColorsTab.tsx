@@ -17,28 +17,22 @@ const ColorsTab: React.FC<ColorsTabProps> = ({ colorTheme, setColorTheme }) => {
         </div>
     <div className="grid grid-cols-3 gap-4">
         <ThemeOption
-          theme="cream"
-          isSelected={colorTheme === "cream"}
-          onClick={() => setColorTheme("cream")}
-          bgColor="bg-[#FFF8E1]"
+          theme="high contrast"
+          isSelected={colorTheme === "high contrast"}
+          onClick={() => setColorTheme("high contrast")}
+          bgColor="bg-[#FFFFFF]"
         />
         <ThemeOption
-          theme="dark"
-          isSelected={colorTheme === "dark"}
-          onClick={() => setColorTheme("dark")}
-          bgColor="bg-[#212121]"
+          theme="soft contrast"
+          isSelected={colorTheme === "soft contrast"}
+          onClick={() => setColorTheme("soft contrast")}
+          bgColor="bg-[#FFF8DC]"
         />
         <ThemeOption
-          theme="blue"
-          isSelected={colorTheme === "blue"}
-          onClick={() => setColorTheme("blue")}
-          bgColor="bg-[#E3F2FD]"
-        />
-        <ThemeOption
-          theme="yellow"
-          isSelected={colorTheme === "yellow"}
-          onClick={() => setColorTheme("yellow")}
-          bgColor="bg-[#FFFDE7]"
+          theme="warm and calm"
+          isSelected={colorTheme === "warm and calm"}
+          onClick={() => setColorTheme("warm and calm")}
+          bgColor="bg-[#FFFFE0]"
         />
         <ThemeOption
           theme="green"
@@ -47,10 +41,52 @@ const ColorsTab: React.FC<ColorsTabProps> = ({ colorTheme, setColorTheme }) => {
           bgColor="bg-[#E8F5E9]"
         />
         <ThemeOption
-          theme="custom"
-          isSelected={colorTheme === "custom"}
-          onClick={() => setColorTheme("custom")}
-          bgColor="bg-[#F5F5F5]"
+          theme="neutral"
+          isSelected={colorTheme === "neutral"}
+          onClick={() => setColorTheme("neutral")}
+          bgColor="bg-[#D3D3D3]"
+        />
+        <ThemeOption
+          theme="vibrant"
+          isSelected={colorTheme === "vibrant"}
+          onClick={() => setColorTheme("vibrant")}
+            bgColor="bg-[#F4C2C2]"
+        />
+        <ThemeOption
+          theme="subtle and relaxed"
+          isSelected={colorTheme === "subtle and relaxed"}
+          onClick={() => setColorTheme("subtle and relaxed")}
+          bgColor="bg-[#F5F5DC]"
+        />
+        <ThemeOption
+          theme="pastel"
+          isSelected={colorTheme === "pastel"}
+          onClick={() => setColorTheme("pastel")}
+          bgColor="bg-[#E6E6FA]"
+        />
+        <ThemeOption
+          theme="hightlight"
+          isSelected={colorTheme === "hightlight"}
+          onClick={() => setColorTheme("hightlight")}
+          bgColor="bg-[#003366]"
+        />
+        <ThemeOption
+          theme="dark"
+          isSelected={colorTheme === "dark"}
+          onClick={() => setColorTheme("dark")}
+          bgColor="bg-[#000000]"
+        />
+        <ThemeOption
+          theme="light"
+          isSelected={colorTheme === "light"}
+          onClick={() => setColorTheme("light")}
+          bgColor="bg-[#333333]"
+        />
+        <ThemeOption
+          theme="muted"
+          isSelected={colorTheme === "muted"}
+          onClick={() => setColorTheme("muted")}
+          bgColor="bg-[#2F4F4F]"
         />
       </div>
       </div>
