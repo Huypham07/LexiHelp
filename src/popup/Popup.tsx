@@ -11,7 +11,7 @@ const Popup: React.FC = () => {
   const [lineHeight, setLineHeight] = useState(1.5);
   const [wordSpacing, setWordSpacing] = useState(1);
   const [ttsHighlight, setTtsHighlight] = useState(false);
-  const [ruler, setRuler] = useState(false);
+  const [ruler, setRuler] = useState(true);
   const [extensionEnabled, setExtensionEnabled] = useState(true);
   const [colorTheme, setColorTheme] = useState("cream");
 

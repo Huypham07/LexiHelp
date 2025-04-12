@@ -3,6 +3,7 @@ import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { Slider } from "./ui/slider";
 import ColorPicker from "./ColorPicker";
+import { useCallback, useEffect, useState } from "react";
 
 interface RulerTabProps {
   ruler: boolean;
@@ -10,6 +11,7 @@ interface RulerTabProps {
   highlight: HTMLElement[];
 }
 
+<<<<<<< Updated upstream
 const RulerTab: React.FC<RulerTabProps> = ({ ruler, setRuler, highlight }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [height, setHeight] = useState(20); // Default height in pixels
@@ -52,6 +54,64 @@ const RulerTab: React.FC<RulerTabProps> = ({ ruler, setRuler, highlight }) => {
       currentLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
+=======
+const RulerTab: React.FC<RulerTabProps> = ({ ruler, setRuler }) => {
+  const [color, setColor] = useState("rgba(0, 0, 0, 0.15)");
+  const [height, setHeight] = useState(20);
+
+  useEffect(() => {
+    if (!chrome?.storage) {
+      return;
+    }
+
+    chrome.storage.local.get(['color', 'height', 'ruler']).then(({ color, height, ruler }) => {
+      if (color) {
+        setColor(color);
+      }
+
+      if (typeof height === 'number') {
+        setHeight(height);
+      }
+
+      if (typeof ruler === 'boolean') {
+        setRuler(ruler);
+      }
+    });
+  }, []);
+
+  const onColorChange = useCallback((value: { toRgbString: () => any; }) => {
+    const rgbString = value.toRgbString();
+    setColor(rgbString);
+
+    if (!chrome?.storage) {
+      return;
+    }
+
+    chrome.storage.local.set({ color: rgbString });
+  }, []);
+
+  const onHeightChange = useCallback((value: number) => {
+    if (value !== null) {
+      setHeight(value);
+
+      if (!chrome?.storage) {
+        return;
+      }
+
+      chrome.storage.local.set({ height: value });
+    }
+  }, []);
+
+  const onRulerChange = useCallback((value: boolean) => {
+    setRuler(value);
+
+    if (!chrome?.storage) {
+      return;
+    }
+
+    chrome.storage.local.set({ enabled: value });
+  }, []);
+>>>>>>> Stashed changes
 
   return (
     <div className="space-y-5">
@@ -60,7 +120,7 @@ const RulerTab: React.FC<RulerTabProps> = ({ ruler, setRuler, highlight }) => {
           <Label htmlFor="ruler" className="text-gray-600">
             Reading Ruler
           </Label>
-          <Switch className="cursor-pointer" checked={ruler} onCheckedChange={setRuler} />
+          <Switch className="cursor-pointer" checked={ruler} onCheckedChange={onRulerChange} />
         </div>
       </div>
       <div className="space-y-3">
