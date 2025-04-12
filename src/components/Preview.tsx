@@ -1,3 +1,4 @@
+import React from "react";
 interface PreviewProps {
   fontSize: number;
   letterSpacing: number;

@@ -1,5 +1,6 @@
 import { Label } from "./ui/label";
 import ThemeOption from "./ThemeOption";
+import React from "react";
 
 interface ColorsTabProps {
   colorTheme: string;

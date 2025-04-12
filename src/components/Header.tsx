@@ -1,6 +1,7 @@
 import { BookOpen } from "lucide-react";
 import { CardHeader, CardTitle, CardDescription } from "./ui/card";
 import { Switch } from "./ui/switch";
+import React from "react";
 
 interface HeaderProps {
   extensionEnabled: boolean;

@@ -1,6 +1,7 @@
 import { Save, RotateCcw } from "lucide-react";
 import { CardFooter } from "./ui/card";
 import { Button } from "./ui/button";
+import React from "react";
 
 const Footer: React.FC = () => {
   return (

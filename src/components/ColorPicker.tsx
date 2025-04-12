@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { HexColorPicker } from "react-colorful";
+import React from "react";
 
 export default function ColorPicker() {
   const [color, setColor] = useState("#ff0000");

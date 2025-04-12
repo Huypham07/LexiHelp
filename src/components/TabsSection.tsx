@@ -4,6 +4,7 @@ import TextTab from "./TextTab";
 import ColorsTab from "./ColorsTab";
 import RulerTab from "./RulerTab";
 import ToolsTab from "./ToolsTab";
+import React from "react";
 
 interface TabsSectionProps {
   fontSize: number;

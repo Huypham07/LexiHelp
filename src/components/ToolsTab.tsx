@@ -5,6 +5,9 @@ import { Switch } from "./ui/switch";
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useEffect, useState } from "react";
+import browser from "webextension-polyfill"
+import { isFirefox } from "../utils/browserDetection";
+import React from "react";
 
 interface ToolsTabProps {
   ttsHighlight: boolean;
@@ -26,10 +29,11 @@ const TOP_VOICES = [
 
 const ToolsTab: React.FC<ToolsTabProps> = ({ ttsHighlight, setTtsHighlight }) => {
   // voice states
-  const voices = TOP_VOICES;
+  // const voices = TOP_VOICES;
   const [selectedVoice, setSelectedVoice] = useState<string>('en-US-ChristopherNeural');
   const [speed, setSpeed] = useState<number>(1.0);
   const [pitch, setPitch] = useState<number>(1.0);
+  const [volume, setVolume] = useState<number>(5.0);
 
   // others tools states
   const [fullscreenStyles, setFullscreenStyles] = useState<boolean>(true);
@@ -37,8 +41,86 @@ const ToolsTab: React.FC<ToolsTabProps> = ({ ttsHighlight, setTtsHighlight }) =>
   
   // useEffect 
   useEffect(() => {
+    // Load saved settings
+    browser.storage.sync.get(['voice', 'speed', 'pitch', 'volume']).then((result) => {
+      if (result.voiceName) {
+        setSelectedVoice(result.voiceName as string);
+      }
+      if (result.speed) {
+        setSpeed(result.speed as number);
+      }
+      if (result.pitch) {
+        setPitch(result.pitch as number);
+      }
+      if (result.volume) {
+        setVolume(result.volume as number);
+      }
+    });
+  }, []);
 
-  })
+  const handleVoiceChange = (voice: string) => {
+    setSelectedVoice(voice);
+    browser.storage.sync.set({ voiceName: voice });
+  }
+
+  const handleSpeedChange = (newSpeed: number) => {
+    setSpeed(newSpeed);
+    browser.storage.sync.set({ speed: newSpeed });
+  }
+
+  const handlePitchChange = (newPitch: number) => {
+    setPitch(newPitch);
+    browser.storage.sync.set({ pitch: newPitch });
+  }
+
+  const handleVolumeChange = (newVolume: number) => {
+    setVolume(newVolume);
+    browser.storage.sync.set({ volume: newVolume });
+  }
+
+  const handlePlayClick = async () => {
+    try {
+      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs[0];
+      if (!tab?.id) {
+        console.error('No active tab found');
+        return;
+      }
+
+      const injectionResults = await browser.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => document.body.innerText,
+      });
+
+      for (const frameResult of injectionResults) {
+        const pageContent = frameResult.result as string;
+        if (!pageContent || !pageContent.trim()) {
+          console.warn('The page content is empty.');
+          continue;
+        }
+
+        if (isFirefox()) {
+          // inject postMessage in page context
+          await browser.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: (text) => {
+              window.postMessage({ action: 'triggerTTS', text }, '*');
+            },
+            args: [pageContent],
+          });
+        } else {
+          // send message to content script
+          await browser.tabs.sendMessage(tab.id, {
+            action: 'readText',
+            text: pageContent,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error sending TTS message:', error);
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="space-y-2">
@@ -66,7 +148,7 @@ const ToolsTab: React.FC<ToolsTabProps> = ({ ttsHighlight, setTtsHighlight }) =>
           <Label htmlFor="voice" className="text-gray-600">
             Voice
           </Label>
-          <Select defaultValue={selectedVoice} onValueChange={setSelectedVoice}>
+          <Select defaultValue={selectedVoice} onValueChange={handleVoiceChange}>
             <SelectTrigger id="voice" className="min-w-40">
               <SelectValue placeholder="Select voice" />
             </SelectTrigger>
@@ -92,11 +174,20 @@ const ToolsTab: React.FC<ToolsTabProps> = ({ ttsHighlight, setTtsHighlight }) =>
 
       <div className="space-y-3">
         <div className="form-row">
+          <Label htmlFor="volume" className="text-gray-600">
+            Volume
+          </Label>
+        </div>
+        <Slider id="volume" min={0} max={10} step={1} defaultValue={[volume]} onValueCommit={(values) => handleVolumeChange(values[0])} />
+      </div>
+
+      <div className="space-y-3">
+        <div className="form-row">
           <Label htmlFor="speech-rate" className="text-gray-600">
             Speech Rate
           </Label>
         </div>
-        <Slider id="speech-rate" min={0.5} max={2} step={0.1} defaultValue={[speed]} onValueCommit={(values) => setSpeed(values[0])} />
+        <Slider id="speech-rate" min={0.5} max={2} step={0.1} defaultValue={[speed]} onValueCommit={(values) => handleSpeedChange(values[0])} />
       </div>
 
       <div className="space-y-3">
@@ -105,13 +196,13 @@ const ToolsTab: React.FC<ToolsTabProps> = ({ ttsHighlight, setTtsHighlight }) =>
             Speech Pitch
           </Label>
         </div>
-        <Slider id="speech-pitch" min={0.5} max={2} step={0.1} defaultValue={[pitch]} onValueCommit={(values) => setPitch(values[0])}/>
+        <Slider id="speech-pitch" min={0.5} max={2} step={0.1} defaultValue={[pitch]} onValueCommit={(values) => handlePitchChange(values[0])}/>
       </div>
 
       <div className="pt-2 space-y-3">
         <div className="form-row">
           <p className="text-gray-500 text-sm">Read preview text aloud</p>
-          <Button variant="outline" size={"sm"} className="text-blue-600">
+          <Button variant="outline" size={"sm"} className="text-blue-600" onClick={handlePlayClick}>
             <Volume2 className="btn-icon" />
             Speak
           </Button>

@@ -2,6 +2,7 @@ import { Label } from "./ui/label";
 import { Switch } from "./ui/switch";
 import { Slider } from "./ui/slider";
 import ColorPicker from "./ColorPicker";
+import React from "react";
 
 interface RulerTabProps {
   ruler: boolean;
