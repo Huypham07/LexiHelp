@@ -2,16 +2,10 @@ import browser from 'webextension-polyfill';
 import { EdgeTTSClient, ProsodyOptions, OUTPUT_FORMAT } from '@/lib/EdgeTTSClient';
 import {
   createControlPanel,
+  StateControlPanel,
   updatePanelContent,
+  updatePlayPauseButton
 } from "@/components/controlPanel";
-
-const circlePlay = `
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-play"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-`
-
-const circlePause = `
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-pause"><circle cx="12" cy="12" r="10"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg>
-`
 import { isFirefox } from '@/utils/browserDetection';
 
 let audioElement: any = null;
@@ -61,25 +55,25 @@ export async function initTTS(text) {
         navigator.mediaSession.setActionHandler("stop", () => stopPlayback());
 
         audioElement.onplay = () => {
-          audioElement.muted = false; // 🔊 unmute once playback begins
+          audioElement.muted = false;
           isPlaying = true;
-          updatePlayPauseButton();
+          updatePlayPauseButton(StateControlPanel.PAUSED);
         };
 
         audioElement.onpause = () => {
           isPlaying = false;
-          updatePlayPauseButton();
+          updatePlayPauseButton(StateControlPanel.RESUMED);
         };
 
         audioElement.onended = () => {
           isPlaying = false;
-          updatePlayPauseButton();
+          updatePlayPauseButton(StateControlPanel.PLAYING);
         };
       }
 
       // Update control panel immediately to show loading state
       if (controlPanel) {
-        updatePanelContent(controlPanel, false);
+        updatePanelContent(false);
       }
 
       const appendNextChunk = () => {
@@ -110,7 +104,7 @@ export async function initTTS(text) {
           } catch (err) {
             console.error('appendNextChunk error:', err, 'chunk length:', chunks[0]?.length);
 
-            // 🚨 Drop the bad chunk so we don't infinitely loop
+            // Drop the bad chunk so we don't infinitely loop
             chunks.shift();
 
             // Try the next chunk in the next tick
@@ -160,23 +154,6 @@ export async function initTTS(text) {
     console.error("TTS Error:", error);
     cleanup();
     throw error;
-  }
-}
-
-function updatePlayPauseButton() {
-  const pauseButton = document.querySelector("#tts-pause");
-  if (pauseButton) {
-    const buttonText =
-      audioElement && !audioElement.paused ? "Pause" : "Resume";
-    pauseButton.innerHTML = `
-      ${audioElement && !audioElement.paused
-        ? circlePause
-        : circlePlay
-      }
-      <span>
-        ${buttonText}
-      </span>
-    `;
   }
 }
 
@@ -260,8 +237,4 @@ window.addEventListener('message', (event) => {
   if (action === 'triggerTTS' && typeof text === 'string') {
     initTTS(text).catch((err) => console.error('initTTS error:', err));
   }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-	createControlPanel();
 });
