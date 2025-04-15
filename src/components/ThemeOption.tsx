@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { getTextColor } from "@/utils/utils";
+import { getTextColorByHex, getTextColorByTailwind } from "@/utils/utils";
 
 interface ThemeOptionProps {
   theme: string;
@@ -15,14 +15,17 @@ const ThemeOption: React.FC<ThemeOptionProps> = ({ theme, isSelected, onClick, b
 
   return (
     <button
-      onClick={onClick}
+      onClick={() => {
+        onClick();
+        console.log("Selected theme:", theme);
+      }}
       className={cn(
         "h-10 rounded-lg flex items-center justify-center transition-all border border-gray-300",
         bgColor,
         isSelected ? "ring-2 ring-blue-500" : "hover:ring-1 hover:ring-blue-300",
-        "text-[" + getTextColor(theme) + "]"
+        getTextColorByTailwind(theme)
       )}>
-      <span className="text-sm font-medium">{displayName}</span>
+      <span className={cn("text-sm font-medium", getTextColorByTailwind(theme) )}>{displayName}</span>
     </button>
   );
 };

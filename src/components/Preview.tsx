@@ -1,4 +1,4 @@
-import { getBackgroundColor, getTextColor } from "@/utils/utils";
+import { getBackgroundColor, getTextColorByHex } from "@/utils/utils";
 
 interface PreviewProps {
   fontSize: number;
@@ -24,7 +24,7 @@ const Preview: React.FC<PreviewProps> = ({
       className="preview-container p-4 rounded-lg shadow-md border"
       style={{
         background: getBackgroundColor(colorTheme),
-        color: getTextColor(colorTheme)
+        color: getTextColorByHex(colorTheme)
       }}>
       <h3 className="text-sm font-medium mb-2">Preview</h3>
       <p
@@ -34,7 +34,7 @@ const Preview: React.FC<PreviewProps> = ({
           letterSpacing: `${letterSpacing * 0.05}em`,
           lineHeight: lineHeight,
           wordSpacing: `${wordSpacing * 0.1}em`,
-          color: getTextColor(colorTheme),
+          color: getTextColorByHex(colorTheme),
         }}>
         {ttsHighlight ? (
           "This is how your text will look with the current settings."
