@@ -5,120 +5,83 @@ import { Switch } from "./ui/switch";
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useEffect, useState } from "react";
-import browser from "webextension-polyfill"
-import { isFirefox } from "../utils/browserDetection";
+import browser from "webextension-polyfill";
 import React from "react";
 
 interface ToolsTabProps {
-  ttsHighlight: boolean;
-  setTtsHighlight: (value: boolean) => void;
+  voice: string;
+  setVoice: (value: string) => void;
+  rate: number;
+  setRate: (value: number) => void;
+  pitch: number;
+  setPitch: (value: number) => void;
+  volume: number;
+  setVolume: (value: number) => void;
+  fullscreenStyles: boolean;
+  setFullscreenStyles: (value: boolean) => void;
+  removeDistractions: boolean;
+  setRemoveDistractions: (value: boolean) => void;
+  onReadPreviewText: () => Promise<void>;
 }
 
-const TOP_VOICES = [
-  'en-US-AndrewNeural',
-  'en-US-AriaNeural',
-  'en-US-AvaNeural',
-  'en-US-ChristopherNeural',
-  'en-US-SteffanNeural',
-  'en-IE-ConnorNeural',
-  'en-GB-RyanNeural',
-  'en-GB-SoniaNeural',
-  'en-AU-NatashaNeural',
-  'en-AU-WilliamNeural',
-];
+const ToolsTab: React.FC<ToolsTabProps> = ({
+  voice,
+  setVoice,
+  rate,
+  setRate,
+  pitch,
+  setPitch,
+  volume,
+  setVolume,
+  fullscreenStyles,
+  setFullscreenStyles,
+  removeDistractions,
+  setRemoveDistractions,
+  onReadPreviewText,
+}) => {
 
-const ToolsTab: React.FC<ToolsTabProps> = ({ ttsHighlight, setTtsHighlight }) => {
-  // voice states
-  // const voices = TOP_VOICES;
-  const [selectedVoice, setSelectedVoice] = useState<string>('en-US-ChristopherNeural');
-  const [speed, setSpeed] = useState<number>(1.0);
-  const [pitch, setPitch] = useState<number>(1.0);
-  const [volume, setVolume] = useState<number>(5.0);
+  const handleVoiceChange = (newVoice: string) => {
+    setVoice(newVoice);
+    browser.storage.local.set({ voice: newVoice });
+  };
 
-  // others tools states
-  const [fullscreenStyles, setFullscreenStyles] = useState<boolean>(true);
-  const [removeDistractions, setRemoveDistractions] = useState<boolean>(false);
-  
-  // useEffect 
-  useEffect(() => {
-    // Load saved settings
-    browser.storage.sync.get(['voice', 'speed', 'pitch', 'volume']).then((result) => {
-      if (result.voiceName) {
-        setSelectedVoice(result.voiceName as string);
-      }
-      if (result.speed) {
-        setSpeed(result.speed as number);
-      }
-      if (result.pitch) {
-        setPitch(result.pitch as number);
-      }
-      if (result.volume) {
-        setVolume(result.volume as number);
-      }
-    });
-  }, []);
-
-  const handleVoiceChange = (voice: string) => {
-    setSelectedVoice(voice);
-    browser.storage.sync.set({ voiceName: voice });
-  }
-
-  const handleSpeedChange = (newSpeed: number) => {
-    setSpeed(newSpeed);
-    browser.storage.sync.set({ speed: newSpeed });
-  }
+  const handleRateChange = (newRate: number) => {
+    setRate(newRate);
+    browser.storage.local.set({ rate: newRate });
+  };
 
   const handlePitchChange = (newPitch: number) => {
     setPitch(newPitch);
-    browser.storage.sync.set({ pitch: newPitch });
-  }
+    browser.storage.local.set({ pitch: newPitch });
+  };
 
   const handleVolumeChange = (newVolume: number) => {
     setVolume(newVolume);
-    browser.storage.sync.set({ volume: newVolume });
-  }
+    browser.storage.local.set({ volume: newVolume });
+  };
 
   const handlePlayClick = async () => {
-    try {
-      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    await onReadPreviewText();
+  };
+
+  const handleFullscreenStylesChange = (enable: boolean) => {
+    setFullscreenStyles(enable);
+    browser.storage.local.set({ fullscreenStyles: enable });
+  };
+
+  const handleRemoveDistractionsChange = (enable: boolean) => {
+    setRemoveDistractions(enable);
+    browser.storage.local.set({ removeDistractions: enable });
+
+    browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
       const tab = tabs[0];
-      if (!tab?.id) {
-        console.error('No active tab found');
-        return;
+      if (tab?.id) {
+        browser.tabs.sendMessage(tab.id, {
+          action: "setRemoveDistractions",
+          enabled: enable,
+        });
       }
-
-      const injectionResults = await browser.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: () => document.body.innerText,
-      });
-
-      for (const frameResult of injectionResults) {
-        const pageContent = frameResult.result as string;
-        if (!pageContent || !pageContent.trim()) {
-          console.warn('The page content is empty.');
-          continue;
-        }
-
-        if (isFirefox()) {
-          // inject postMessage in page context
-          await browser.scripting.executeScript({
-            target: { tabId: tab.id },
-            func: (text) => {
-              window.postMessage({ action: 'triggerTTS', text }, '*');
-            },
-            args: [pageContent],
-          });
-        } else {
-          // send message to content script
-          await browser.tabs.sendMessage(tab.id, {
-            action: 'readText',
-            text: pageContent,
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error sending TTS message:', error);
-    }
+    });
   };
 
   return (
@@ -128,7 +91,11 @@ const ToolsTab: React.FC<ToolsTabProps> = ({ ttsHighlight, setTtsHighlight }) =>
           <Label htmlFor="styles-all" className="text-gray-600">
             Apply styles for fullscreen reading
           </Label>
-          <Switch className="cursor-pointer" defaultChecked={fullscreenStyles} onCheckedChange={setFullscreenStyles}/>
+          <Switch
+            className="cursor-pointer"
+            checked={fullscreenStyles}
+            onCheckedChange={handleFullscreenStylesChange}
+          />
         </div>
         <p className="text-gray-500 text-sm">Ctrl + click to apply for target paragraph</p>
       </div>
@@ -138,7 +105,11 @@ const ToolsTab: React.FC<ToolsTabProps> = ({ ttsHighlight, setTtsHighlight }) =>
           <Label htmlFor="remove-distraction" className="text-gray-600">
             Remove Distractions
           </Label>
-          <Switch className="cursor-pointer" defaultChecked={removeDistractions} onCheckedChange={setRemoveDistractions}/>
+          <Switch
+            className="cursor-pointer"
+            checked={removeDistractions}
+            onCheckedChange={handleRemoveDistractionsChange}
+          />
         </div>
         <p className="text-gray-500 text-sm">Hide images, ads, and other distracting elements</p>
       </div>
@@ -148,55 +119,80 @@ const ToolsTab: React.FC<ToolsTabProps> = ({ ttsHighlight, setTtsHighlight }) =>
           <Label htmlFor="voice" className="text-gray-600">
             Voice
           </Label>
-          <Select defaultValue={selectedVoice} onValueChange={handleVoiceChange}>
+          <Select value={voice} onValueChange={handleVoiceChange}>
             <SelectTrigger id="voice" className="min-w-40">
               <SelectValue placeholder="Select voice" />
             </SelectTrigger>
             <SelectContent className="max-h-60 overflow-y-auto">
-              {TOP_VOICES.map((voice) => (
-                <SelectItem key={voice} value={voice}>
-                  {voice}
-                </SelectItem>
-              ))}
+              <SelectItem key="male" value="male">
+                Male
+              </SelectItem>
+              <SelectItem key="female" value="female">
+                Female
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
-      <div className="space-y-3">
+      {/* <div className="space-y-3">
         <div className="form-row">
           <Label htmlFor="tts-highlight" className="text-gray-600">
             Text-to-Speech Highlight
           </Label>
           <Switch className="cursor-pointer" checked={ttsHighlight} onCheckedChange={setTtsHighlight} />
         </div>
-      </div>
+      </div> */}
 
       <div className="space-y-3">
         <div className="form-row">
           <Label htmlFor="volume" className="text-gray-600">
-            Volume
+            Volume:
+            <span className="text-gray-500 text-sm">{volume}%</span>
           </Label>
         </div>
-        <Slider id="volume" min={0} max={10} step={1} defaultValue={[volume]} onValueCommit={(values) => handleVolumeChange(values[0])} />
+        <Slider
+          id="volume"
+          min={0}
+          max={100}
+          step={5}
+          value={[volume]}
+          onValueChange={(values) => handleVolumeChange(values[0])}
+        />
       </div>
 
       <div className="space-y-3">
         <div className="form-row">
           <Label htmlFor="speech-rate" className="text-gray-600">
-            Speech Rate
+            Speech Rate:
+            <span className="text-gray-500 text-sm">{rate}</span>
           </Label>
         </div>
-        <Slider id="speech-rate" min={0.5} max={2} step={0.1} defaultValue={[speed]} onValueCommit={(values) => handleSpeedChange(values[0])} />
+        <Slider
+          id="speech-rate"
+          min={0.5}
+          max={2}
+          step={0.25}
+          value={[rate]}
+          onValueChange={(values) => handleRateChange(values[0])}
+        />
       </div>
 
       <div className="space-y-3">
         <div className="form-row">
           <Label htmlFor="speech-pitch" className="text-gray-600">
-            Speech Pitch
+            Speech Pitch:
+            <span className="text-gray-500 text-sm">{`${pitch < 0 ? pitch : "+" + pitch}%`}</span>
           </Label>
         </div>
-        <Slider id="speech-pitch" min={0.5} max={2} step={0.1} defaultValue={[pitch]} onValueCommit={(values) => handlePitchChange(values[0])}/>
+        <Slider
+          id="speech-pitch"
+          min={-50}
+          max={50}
+          step={5}
+          value={[pitch]}
+          onValueChange={(values) => handlePitchChange(values[0])}
+        />
       </div>
 
       <div className="pt-2 space-y-3">

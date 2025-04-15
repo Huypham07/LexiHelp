@@ -7,6 +7,7 @@ import ToolsTab from "./ToolsTab";
 import React from "react";
 
 interface TabsSectionProps {
+  extensionEnabled: boolean;
   fontSize: number;
   setFontSize: (value: number) => void;
   letterSpacing: number;
@@ -15,15 +16,27 @@ interface TabsSectionProps {
   setLineHeight: (value: number) => void;
   wordSpacing: number;
   setWordSpacing: (value: number) => void;
-  ttsHighlight: boolean;
-  setTtsHighlight: (value: boolean) => void;
   ruler: boolean;
   setRuler: (value: boolean) => void;
   colorTheme: string;
   setColorTheme: (value: string) => void;
+  voice: string;
+  setVoice: (value: string) => void;
+  rate: number;
+  setRate: (value: number) => void;
+  pitch: number;
+  setPitch: (value: number) => void;
+  volume: number;
+  setVolume: (value: number) => void;
+  fullscreenStyles: boolean;
+  setFullscreenStyles: (value: boolean) => void;
+  removeDistractions: boolean;
+  setRemoveDistractions: (value: boolean) => void;
+  onReadPreviewText: () => Promise<void>;
 }
 
 const TabsSection: React.FC<TabsSectionProps> = ({
+  extensionEnabled,
   fontSize,
   setFontSize,
   letterSpacing,
@@ -32,12 +45,23 @@ const TabsSection: React.FC<TabsSectionProps> = ({
   setLineHeight,
   wordSpacing,
   setWordSpacing,
-  ttsHighlight,
-  setTtsHighlight,
   ruler,
   setRuler,
   colorTheme,
   setColorTheme,
+  voice,
+  setVoice,
+  rate,
+  setRate,
+  pitch,
+  setPitch,
+  volume,
+  setVolume,
+  fullscreenStyles,
+  setFullscreenStyles,
+  removeDistractions,
+  setRemoveDistractions,
+  onReadPreviewText,
 }) => {
   return (
     <Tabs defaultValue="text" className="tabs">
@@ -60,7 +84,7 @@ const TabsSection: React.FC<TabsSectionProps> = ({
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="text">
+      <TabsContent value="text" className={`${!extensionEnabled ? "opacity-50 pointer-events-none" : ""}`}>
         <TextTab
           fontSize={fontSize}
           setFontSize={setFontSize}
@@ -73,16 +97,30 @@ const TabsSection: React.FC<TabsSectionProps> = ({
         />
       </TabsContent>
 
-      <TabsContent value="colors">
+      <TabsContent value="colors" className={`${!extensionEnabled ? "opacity-50 pointer-events-none" : ""}`}>
         <ColorsTab colorTheme={colorTheme} setColorTheme={setColorTheme} />
       </TabsContent>
 
-      <TabsContent value="ruler">
+      <TabsContent value="ruler" className={`${!extensionEnabled ? "opacity-50 pointer-events-none" : ""}`}>
         <RulerTab ruler={ruler} setRuler={setRuler} />
       </TabsContent>
 
-      <TabsContent value="tools">
-        <ToolsTab ttsHighlight={ttsHighlight} setTtsHighlight={setTtsHighlight} />
+      <TabsContent value="tools" className={`${!extensionEnabled ? "opacity-50 pointer-events-none" : ""}`}>
+        <ToolsTab
+          voice={voice}
+          setVoice={setVoice}
+          rate={rate}
+          setRate={setRate}
+          pitch={pitch}
+          setPitch={setPitch}
+          volume={volume}
+          setVolume={setVolume}
+          fullscreenStyles={fullscreenStyles}
+          setFullscreenStyles={setFullscreenStyles}
+          removeDistractions={removeDistractions}
+          setRemoveDistractions={setRemoveDistractions}
+          onReadPreviewText={onReadPreviewText}
+        />
       </TabsContent>
     </Tabs>
   );

@@ -1,4 +1,4 @@
-import { Buffer } from 'buffer';
+import { Buffer } from "buffer";
 
 export enum OUTPUT_FORMAT {
   AUDIO_24KHZ_48KBITRATE_MONO_MP3 = "audio-24khz-48kbitrate-mono-mp3",
@@ -35,7 +35,7 @@ export enum VOLUME {
 }
 
 export class ProsodyOptions {
-  pitch: PITCH | string = "+0Hz";
+  pitch: PITCH | string = "+0%";
   rate: RATE | string | number = 1.0;
   volume: VOLUME | string | number = 100.0;
 }
@@ -48,7 +48,7 @@ class EventEmitter {
     close: [],
     end: [],
   };
-
+  
   on(event: EventType, callback: (...args: any[]) => void) {
     this.eventListeners[event].push(callback);
   }
@@ -147,7 +147,8 @@ export class EdgeTTSClient {
       this.cacheAudioData(buffer, requestId);
     } else if (message.includes("Path:audio.metadata")) {
       const startIndex = message.indexOf("{");
-      metadataBuffer.push(JSON.parse(message.slice(startIndex)).Metadata[0]);
+      const metadata = JSON.parse(message.slice(startIndex)).Metadata[0];
+      metadataBuffer.push(metadata);
     } else {
       this.log("Unknown Message", message);
     }
@@ -165,7 +166,7 @@ export class EdgeTTSClient {
     const binaryDelimBytes = new TextEncoder().encode(EdgeTTSClient.BINARY_DELIM);
     const delimiterIndex = this.findDelimiterIndex(buffer, binaryDelimBytes);
     if (delimiterIndex === -1) {
-      this.log('Delimiter not found in the buffer.');
+      this.log("Delimiter not found in the buffer.");
       return;
     }
 

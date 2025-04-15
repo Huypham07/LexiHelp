@@ -77,7 +77,6 @@ export async function createControlPanel(isLoading = true) {
 
 	updatePanelContent(isLoading);
 
-	console.log('Control panel with Shadow DOM created:', panel);
 	return panel;
 }
 

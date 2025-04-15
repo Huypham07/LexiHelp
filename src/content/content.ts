@@ -1,12 +1,15 @@
-import browser from 'webextension-polyfill';
-import { EdgeTTSClient, ProsodyOptions, OUTPUT_FORMAT } from '@/lib/EdgeTTSClient';
+import browser from "webextension-polyfill";
+import { EdgeTTSClient, ProsodyOptions, OUTPUT_FORMAT } from "@/lib/EdgeTTSClient";
 import {
   createControlPanel,
   StateControlPanel,
   updatePanelContent,
-  updatePlayPauseButton
+  updatePlayPauseButton,
 } from "@/components/controlPanel";
-import { isFirefox } from '@/utils/browserDetection';
+import { isFirefox } from "@/utils/browserDetection";
+import { Readability } from "@mozilla/readability";
+import { franc } from "franc";
+import { languageVoiceMap } from "@/utils/languageVoiceMap";
 
 let audioElement: any = null;
 let isPlaying = false;
@@ -19,17 +22,22 @@ window.stopPlayback = stopPlayback;
 export async function initTTS(text) {
   cleanup();
   try {
-    const settings = await browser.storage.sync.get({
-      voiceName: "en-US-ChristopherNeural",
-      customVoice: "",
-      speed: 1.2,
+    const settings = await browser.storage.local.get({
+      voice: "female",
+      rate: 1.0,
+      pitch: 1.0,
+      volume: 50,
     });
 
     // Create control panel in loading state
     controlPanel = await createControlPanel(true);
 
     const tts = new EdgeTTSClient();
-    const voiceName = settings.customVoice as string || settings.voiceName as string;
+
+    const langCode = franc(text) || "eng";
+    console.log("Detected language code:", langCode);
+    const voices = languageVoiceMap[langCode] || languageVoiceMap["default"];
+    const voiceName = voices[settings.voice as string] || voices["female"];
     await tts.setMetadata(
       voiceName, // Use custom voice if specified
       OUTPUT_FORMAT.WEBM_24KHZ_16BIT_MONO_OPUS
@@ -37,7 +45,9 @@ export async function initTTS(text) {
     );
 
     const prosodyOptions = new ProsodyOptions();
-    prosodyOptions.rate = settings.speed as number;
+    prosodyOptions.rate = settings.rate as number;
+    prosodyOptions.pitch = `${settings.pitch as number}%`;
+    prosodyOptions.volume = settings.volume as number;
 
     return new Promise((resolve, reject) => {
       const mediaSource = new MediaSource();
@@ -90,19 +100,19 @@ export async function initTTS(text) {
                 if (isFirefox()) {
                   setTimeout(() => {
                     audioElement.play().catch((err) => {
-                      console.warn('Firefox autoplay workaround failed:', err);
+                      console.warn("Firefox autoplay workaround failed:", err);
                     });
                   }, 0);
                 } else {
                   audioElement.play().catch((err) => {
-                    console.warn('Audio playback failed:', err);
+                    console.warn("Audio playback failed:", err);
                   });
                 }
                 isFirstChunk = false;
               }
             }
           } catch (err) {
-            console.error('appendNextChunk error:', err, 'chunk length:', chunks[0]?.length);
+            console.error("appendNextChunk error:", err, "chunk length:", chunks[0]?.length);
 
             // Drop the bad chunk so we don't infinitely loop
             chunks.shift();
@@ -113,10 +123,10 @@ export async function initTTS(text) {
         }
       };
 
-      mediaSource.addEventListener('sourceopen', () => {
+      mediaSource.addEventListener("sourceopen", () => {
         try {
           sourceBuffer = mediaSource.addSourceBuffer('audio/webm; codecs="opus"');
-          sourceBuffer.addEventListener('updateend', appendNextChunk);
+          sourceBuffer.addEventListener("updateend", appendNextChunk);
 
           const stream = tts.toStream(text, prosodyOptions);
 
@@ -184,6 +194,13 @@ function cleanup() {
   audioElement = null;
   isPlaying = false;
   removeControlPanel();
+
+  // Remove all highlights
+  document.querySelectorAll(".lexi-help-highlight").forEach((el) => {
+    // Replace the highlighted span with its text content
+    const textNode = document.createTextNode(el.textContent);
+    el.parentNode.replaceChild(textNode, el);
+  });
 }
 
 function removeControlPanel() {
@@ -200,41 +217,90 @@ interface ExtensionMessage {
 }
 
 // Message listener with type assertion to bypass strict type checking
-browser.runtime.onMessage.addListener(function handleMessage(
-  request: ExtensionMessage,
-  sender,
-  sendResponse
-) {
-  console.log("Received message:", request, sender);
+browser.runtime.onMessage.addListener(function handleMessage(request: ExtensionMessage, sender, sendResponse) {
   if (request.action === "stopPlayback") {
     stopPlayback();
-  }
-  else if (request.action === "readSelection") {
+  } else if (request.action === "readSelection") {
     initTTS(request.text).catch((error) => {
       console.error("TTS initialization error:", error);
     });
-  }
-  else if (request.action === 'readPage') {
+  } else if (request.action === "readPage") {
     // Extract the page content
     const pageContent = document.body.innerText;
 
-    if (pageContent && pageContent.trim() !== '') {
+    if (pageContent && pageContent.trim() !== "") {
       initTTS(pageContent).catch((error) => {
         console.error("TTS initialization error:", error);
       });
     } else {
-      console.warn('The page content is empty.');
+      console.warn("The page content is empty.");
     }
   }
 
   return true; // Always return true for polyfill compatibility
 } as browser.Runtime.OnMessageListener);
 
-window.addEventListener('message', (event) => {
+window.addEventListener("message", (event) => {
   if (event.source !== window) return;
 
   const { action, text } = event.data || {};
-  if (action === 'triggerTTS' && typeof text === 'string') {
-    initTTS(text).catch((err) => console.error('initTTS error:', err));
+  if (action === "triggerTTS" && typeof text === "string") {
+    initTTS(text).catch((err) => console.error("initTTS error:", err));
   }
 });
+
+// distraction listener
+
+let removeDistractions = false;
+
+browser.runtime.onMessage.addListener((message) => {
+  if (message.action === "setRemoveDistractions") {
+    if (message.enabled) {
+      enableReaderMode();
+    } else {
+      disableReaderMode();
+    }
+  }
+});
+
+let originalNodes: Node[] | null = null;
+
+function enableReaderMode() {
+  if (removeDistractions) return;
+
+  // Lưu lại DOM gốc
+  originalNodes = Array.from(document.body.childNodes);
+
+  const article = new Readability(document.cloneNode(true) as Document).parse();
+  if (!article) return;
+
+  document.body.replaceChildren();
+
+  const articleElement = document.createElement("article");
+  articleElement.style.maxWidth = "800px";
+  articleElement.style.margin = "auto";
+
+  articleElement.innerHTML = `<h1>${article.title}</h1>${article.content}`;
+  document.body.appendChild(articleElement);
+
+  injectReaderStyle();
+  removeDistractions = true;
+}
+
+function disableReaderMode() {
+  if (!removeDistractions || !originalNodes) return;
+
+  document.body.replaceChildren(...originalNodes);
+  removeDistractions = false;
+}
+
+function injectReaderStyle() {
+  const style = document.createElement("style");
+  // can change styles here
+  style.textContent = `
+    body { background: #f4f4f4; color: #222; line-height: 1.8; font-size: 18px; font-family: sans-serif; padding: 2rem; }
+    img { max-width: 100%; height: auto; }
+    a { color: #007bff; }
+  `;
+  document.head.appendChild(style);
+}
