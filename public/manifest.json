@@ -1,0 +1,39 @@
+{
+    "manifest_version": 3,
+    "name": "LexiHelp",
+    "version": "1.0.0",
+    "description": "A browser extension to help people with dyslexia read web content more easily",
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    },
+    "action": {
+        "default_popup": "index.html",
+        "default_title": "LexiHelp"
+    },
+    "permissions": [
+        "activeTab",
+        "storage"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "src/content.js"
+            ]
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": ["fonts/*.woff2"],
+            "matches": ["<all_urls>"]
+        }
+    ],
+    "background": {
+        "service_worker": "src/background.js",
+        "type": "module"
+    }
+}
