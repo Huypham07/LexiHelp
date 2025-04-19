@@ -20,6 +20,8 @@ interface TabsSectionProps {
   setRuler: (value: boolean) => void;
   colorTheme: string;
   setColorTheme: (value: string) => void;
+  fontFamily: string;
+  setFontFamily: (value: string) => void;
 }
 
 const TabsSection: React.FC<TabsSectionProps> = ({
@@ -31,6 +33,8 @@ const TabsSection: React.FC<TabsSectionProps> = ({
   setLineHeight,
   wordSpacing,
   setWordSpacing,
+  fontFamily,
+  setFontFamily,
   ttsHighlight,
   setTtsHighlight,
   ruler,
@@ -69,6 +73,8 @@ const TabsSection: React.FC<TabsSectionProps> = ({
           setLineHeight={setLineHeight}
           wordSpacing={wordSpacing}
           setWordSpacing={setWordSpacing}
+          fontFamily={fontFamily}
+          setFontFamily={setFontFamily}
         />
       </TabsContent>
 

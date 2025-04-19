@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -14,6 +14,51 @@ const Popup: React.FC = () => {
   const [ruler, setRuler] = useState(false);
   const [extensionEnabled, setExtensionEnabled] = useState(true);
   const [colorTheme, setColorTheme] = useState("cream");
+  const [fontFamily, setFontFamily] = useState("openDyslexic");
+
+  useEffect(() => {
+    chrome.storage.sync.get(
+      ['fontSize', 'letterSpacing', 'lineHeight', 'wordSpacing', 'fontFamily', 'extensionEnabled'],
+      ({ fontSize, letterSpacing, lineHeight, wordSpacing, fontFamily, extensionEnabled}) => {
+        if (fontSize !== undefined) setFontSize(fontSize);
+        if (letterSpacing !== undefined) setLetterSpacing(letterSpacing);
+        if (lineHeight !== undefined) setLineHeight(lineHeight);
+        if (wordSpacing !== undefined) setWordSpacing(wordSpacing);
+        if (fontFamily !== undefined) setFontFamily(fontFamily);
+        if (extensionEnabled !== undefined) setExtensionEnabled(extensionEnabled);
+  
+        //Tự động apply settings lên web khi mở popup
+        chrome.tabs.query({}, (tabs) => {
+          tabs.forEach((tab) => {
+            if (tab.id) {
+              chrome.tabs.sendMessage(tab.id, {
+                type: 'UPDATE_ALL_STYLES',
+                fontSize,
+                letterSpacing,
+                lineHeight,
+                wordSpacing,
+                fontFamily,
+              });
+            }
+          });
+        });
+      }
+    );
+  }, []);
+
+  useEffect(() => {
+    chrome.storage.sync.set({ extensionEnabled });
+  
+    chrome.tabs.query({}, (tabs) => {
+    tabs.forEach((tab) => {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, {
+          type: extensionEnabled ? "ENABLE_EXTENSION" : "DISABLE_EXTENSION"
+        });
+      }
+    });
+  });
+}, [extensionEnabled]);
 
   return (
     <div className="popup-container">
@@ -29,6 +74,8 @@ const Popup: React.FC = () => {
             setLineHeight={setLineHeight}
             wordSpacing={wordSpacing}
             setWordSpacing={setWordSpacing}
+            fontFamily={fontFamily}
+            setFontFamily={setFontFamily}
             ttsHighlight={ttsHighlight}
             setTtsHighlight={setTtsHighlight}
             ruler={ruler}
@@ -41,6 +88,7 @@ const Popup: React.FC = () => {
             letterSpacing={letterSpacing}
             lineHeight={lineHeight}
             wordSpacing={wordSpacing}
+            fontFamily={fontFamily}
             ttsHighlight={ttsHighlight}
             ruler={ruler}
             colorTheme={colorTheme}

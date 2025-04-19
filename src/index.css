@@ -1,10 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
+
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  font-family: "Inter", system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "OpenDyslexic", "LexieReadble", "Lexend", "Inter", "Century Gothic", system-ui, Avenir, Helvetica, Arial, sans-serif;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -124,3 +126,20 @@
     @apply bg-background text-foreground;
   }
 }
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/public/fonts/OpenDyslexic-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LexieReadable';
+  src: url('/public/fonts/LexieReadable-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
