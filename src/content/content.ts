@@ -1,5 +1,5 @@
 import browser from "webextension-polyfill";
-import { EdgeTTSClient, ProsodyOptions, OUTPUT_FORMAT } from "@/lib/EdgeTTSClient";
+import { EdgeTTSClient, ProsodyOptions, OUTPUT_FORMAT } from "edge-tts-client";
 import {
   createControlPanel,
   StateControlPanel,
