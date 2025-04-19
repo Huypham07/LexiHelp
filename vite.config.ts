@@ -16,7 +16,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         background: resolve(__dirname, 'src/background/background.ts'),
-        content: resolve(__dirname, 'src/content/content.ts'),
+        content: resolve(__dirname, 'src/content/colorChange.ts'),
       },
       output: {
         entryFileNames: (chunk) => {
