@@ -1,7 +1,7 @@
 import { Label } from "./ui/label";
 import ThemeOption from "./ThemeOption";
 import { getTextColorByHex, getBackgroundColor } from "@/utils/utils";
-import { Button } from "./ui/button";
+import { useEffect } from "react";
 
 interface ColorsTabProps {
   colorTheme: string;
@@ -13,7 +13,7 @@ const ColorsTab: React.FC<ColorsTabProps> = ({ colorTheme, setColorTheme }) => {
   // This function is called when a theme is selected
   // It updates the colorTheme state and sends a message to the content script to apply the colors
   const handleApplyColor = (theme: string) => {
-
+    setColorTheme(theme);
     // Send a message to the content script to apply the colors
     // chrome.runtime.sendMessage({
     //   action: "changeColors",
@@ -39,9 +39,19 @@ const ColorsTab: React.FC<ColorsTabProps> = ({ colorTheme, setColorTheme }) => {
 
     chrome.storage.local.set({
       textColor: getTextColorByHex(theme),
-      backGroundColor: getBackgroundColor(theme)
+      backgroundColor: getBackgroundColor(theme),
+      theme: theme
     });
   }
+
+  // Load default theme from chrome.storage.local when the component mounts
+  useEffect(() => {
+    chrome.storage.local.get("theme", (result) => {
+      if (result.theme) {
+        setColorTheme(result.theme); // Set the default theme
+      }
+    });
+  }, [setColorTheme]);
 
   return (
     <div className="space-y-5">
@@ -51,86 +61,80 @@ const ColorsTab: React.FC<ColorsTabProps> = ({ colorTheme, setColorTheme }) => {
             Color Theme
           </Label>
         </div>
-    <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <ThemeOption
           theme="high contrast"
           isSelected={colorTheme === "high contrast"}
-          onClick={() => setColorTheme("high contrast")}
+          onClick={() => handleApplyColor("high contrast")}
           bgColor="bg-[#FFFFFF]"
         />
         <ThemeOption
           theme="soft contrast"
           isSelected={colorTheme === "soft contrast"}
-          onClick={() => setColorTheme("soft contrast")}
+          onClick={() => handleApplyColor("soft contrast")}
           bgColor="bg-[#FFF8DC]"
         />
         <ThemeOption
           theme="warm and calm"
           isSelected={colorTheme === "warm and calm"}
-          onClick={() => setColorTheme("warm and calm")}
+          onClick={() => handleApplyColor("warm and calm")}
           bgColor="bg-[#FFFFE0]"
         />
         <ThemeOption
           theme="green"
           isSelected={colorTheme === "green"}
-          onClick={() => setColorTheme("green")}
+          onClick={() => handleApplyColor("green")}
           bgColor="bg-[#E8F5E9]"
         />
         <ThemeOption
           theme="neutral"
           isSelected={colorTheme === "neutral"}
-          onClick={() => setColorTheme("neutral")}
+          onClick={() => handleApplyColor("neutral")}
           bgColor="bg-[#D3D3D3]"
         />
         <ThemeOption
           theme="vibrant"
           isSelected={colorTheme === "vibrant"}
-          onClick={() => setColorTheme("vibrant")}
+          onClick={() => handleApplyColor("vibrant")}
             bgColor="bg-[#F4C2C2]"
         />
         <ThemeOption
           theme="subtle and relaxed"
           isSelected={colorTheme === "subtle and relaxed"}
-          onClick={() => setColorTheme("subtle and relaxed")}
+          onClick={() => handleApplyColor("subtle and relaxed")}
           bgColor="bg-[#F5F5DC]"
         />
         <ThemeOption
           theme="pastel"
           isSelected={colorTheme === "pastel"}
-          onClick={() => setColorTheme("pastel")}
+          onClick={() => handleApplyColor("pastel")}
           bgColor="bg-[#E6E6FA]"
         />
         <ThemeOption
           theme="hightlight"
           isSelected={colorTheme === "hightlight"}
-          onClick={() => setColorTheme("hightlight")}
+          onClick={() => handleApplyColor("hightlight")}
           bgColor="bg-[#003366]"
         />
         <ThemeOption
           theme="dark"
           isSelected={colorTheme === "dark"}
-          onClick={() => setColorTheme("dark")}
+          onClick={() => handleApplyColor("dark")}
           bgColor="bg-[#000000]"
         />
         <ThemeOption
           theme="light"
           isSelected={colorTheme === "light"}
-          onClick={() => setColorTheme("light")}
+          onClick={() => handleApplyColor("light")}
           bgColor="bg-[#333333]"
         />
         <ThemeOption
           theme="muted"
           isSelected={colorTheme === "muted"}
-          onClick={() => setColorTheme("muted")}
+          onClick={() => handleApplyColor("muted")}
           bgColor="bg-[#2F4F4F]"
         />
       </div>
-        <Button
-          variant="outline"
-          className="mt-4"
-          onClick={() => {handleApplyColor(colorTheme)}}>
-          Apply
-        </Button>
       </div>
     </div>
   );
