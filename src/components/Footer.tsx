@@ -2,6 +2,7 @@ import { Save, RotateCcw } from "lucide-react";
 import { CardFooter } from "./ui/card";
 import { Button } from "./ui/button";
 
+
 const Footer: React.FC = () => {
   return (
     <CardFooter className="card-footer flex justify-between px-6 pb-3 pt-3">
@@ -10,7 +11,7 @@ const Footer: React.FC = () => {
         Reset
       </Button>
       <Button>
-        <Save className="mr-1" />
+        <Save className="mr-1"/>
         Apply Settings
       </Button>
     </CardFooter>

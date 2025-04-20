@@ -1,8 +1,30 @@
+export const getActualFontFamily = (fontKey: string): string => {
+  switch (fontKey) {
+    case "comic":
+      return '"Comic Sans MS", cursive, sans-serif';
+    case "arial":
+      return 'Arial, sans-serif';
+    case "verdana":
+      return 'Verdana, sans-serif';
+    case "openDyslexic":
+      return '"OpenDyslexic", sans-serif';
+    case "lexend":
+      return "'Lexend', sans-serif";
+    case "lexieReadble":
+      return "'Lexie Readable', sans-serif";
+    case "centuryGothic":
+      return '"Century Gothic", sans-serif';
+    default:
+      return 'sans-serif';
+  }
+};
+
 interface PreviewProps {
   fontSize: number;
   letterSpacing: number;
   lineHeight: number;
   wordSpacing: number;
+  fontFamily: string;
   ttsHighlight: boolean;
   ruler: boolean;
   colorTheme: string;
@@ -13,6 +35,7 @@ const Preview: React.FC<PreviewProps> = ({
   letterSpacing,
   lineHeight,
   wordSpacing,
+  fontFamily,
   ttsHighlight,
   ruler,
   colorTheme,
@@ -43,6 +66,7 @@ const Preview: React.FC<PreviewProps> = ({
           letterSpacing: `${letterSpacing * 0.05}em`,
           lineHeight: lineHeight,
           wordSpacing: `${wordSpacing * 0.1}em`,
+          fontFamily: getActualFontFamily(fontFamily),
           color: colorTheme === "dark" ? "#fff" : "#333",
         }}>
         {ttsHighlight ? (

@@ -2,8 +2,7 @@
     "manifest_version": 3,
     "name": "LexiHelp",
     "version": "1.0.0",
-    "offline_enabled": true,
-    "description": "A browser extension to help people with dyslexia read w more easily",
+    "description": "A browser extension to help people with dyslexia read web content more easily",
     "icons": {
         "16": "icons/icon16.png",
         "48": "icons/icon48.png",

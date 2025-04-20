@@ -1,10 +1,26 @@
-console.log('Reading Ruler background script initialized');
+import browser from "webextension-polyfill"
+
+browser.runtime.onInstalled.addListener(() => {
+    // add context menu for reading selected text
+    browser.contextMenus.create({
+        id: "readSelectedText",
+        title: "Read Aloud with LexiHelp",
+        contexts: ["selection"],
+    });
+
+    // add context menu for reading the entire page
+    browser.contextMenus.create({
+        id: "readPage",
+        title: "Read Page Aloud with LexiHelp",
+        contexts: ["page"],
+    });
+})
 
 // Set default values when the extension is installed
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.local.get(['rulerConfig'], (result) => {
+browser.runtime.onInstalled.addListener(() => {
+  browser.storage.local.get(['rulerConfig']).then((result) => {
     if (!result.rulerConfig) {
-      chrome.storage.local.set({
+      browser.storage.local.set({
         rulerConfig: {
           ruler: true,
           height: 20,
@@ -17,10 +33,21 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Keep service worker alive in MV3
-chrome.runtime.onConnect.addListener(function(port) {
+browser.runtime.onConnect.addListener(function(port) {
   if (port.name === "keepAlive") {
     port.onDisconnect.addListener(function() {
       // Reconnect or any other logic if needed
     });
   }
+});
+
+browser.runtime.onInstalled.addListener(() => {
+  browser.storage.local.set({
+    fontSize: 16,
+    letterSpacing: 1.0,
+    lineHeight: 1.5,
+    wordSpacing: 1.0,
+    fontFamily: 'openDyslexic',
+    extensionEnabled:true
+  });
 });
