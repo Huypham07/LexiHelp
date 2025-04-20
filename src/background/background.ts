@@ -2,9 +2,9 @@ console.log('Reading Ruler background script initialized');
 
 // Set default values when the extension is installed
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.sync.get(['rulerConfig'], (result) => {
+  chrome.storage.local.get(['rulerConfig'], (result) => {
     if (!result.rulerConfig) {
-      chrome.storage.sync.set({
+      chrome.storage.local.set({
         rulerConfig: {
           ruler: true,
           height: 20,

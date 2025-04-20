@@ -46,7 +46,7 @@ const Popup: React.FC = () => {
     };
 
     // Save to storage
-    chrome.storage.sync.set(config);
+    chrome.storage.local.set(config);
 
     // Send message to content script
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
