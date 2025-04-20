@@ -2,6 +2,7 @@ import React from "react";
 import { Slider } from "./ui/slider";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import browser from "webextension-polyfill";
 
 interface TextTabProps {
   fontSize: number;
@@ -30,13 +31,13 @@ const TextTab: React.FC<TextTabProps> = ({
 }) => {
   const handleFontFamilyChange = (value: string) => {
     setFontFamily(value);
-    chrome.storage.sync.set({ fontFamily: value });
-    
-    chrome.tabs.query({}, (tabs) => {
+    browser.storage.local.set({ fontFamily: value });
+
+    browser.tabs.query({}).then((tabs) => {
       tabs.forEach((tab) => {
-        if (tab.id) {
-          chrome.tabs.sendMessage(tab.id, {
-            type: 'UPDATE_FONT_FAMILY',
+        if (tab.id !== undefined) {
+          browser.tabs.sendMessage(tab.id, {
+            type: "UPDATE_FONT_FAMILY",
             fontFamily: value,
           });
         }
@@ -47,14 +48,14 @@ const TextTab: React.FC<TextTabProps> = ({
   const handleFontSizeChange = (value: number[]) => {
     const newSize = value[0];
     setFontSize(newSize);
-    chrome.storage.sync.set({ fontSize: newSize });
+    browser.storage.local.set({ fontSize: newSize });
 
-    chrome.tabs.query({}, (tabs) => {
+    browser.tabs.query({}).then((tabs) => {
       tabs.forEach((tab) => {
         if (tab.id) {
-          chrome.tabs.sendMessage(tab.id, {
-            type: 'UPDATE_FONT_SIZE',
-            fontSize: newSize
+          browser.tabs.sendMessage(tab.id, {
+            type: "UPDATE_FONT_SIZE",
+            fontSize: newSize,
           });
         }
       });
@@ -64,32 +65,31 @@ const TextTab: React.FC<TextTabProps> = ({
   const handleLetterSpacingChange = (value: number[]) => {
     const newSpacing = value[0];
     setLetterSpacing(newSpacing);
-    chrome.storage.sync.set({ letterSpacing: newSpacing });
+    browser.storage.local.set({ letterSpacing: newSpacing });
 
-    chrome.tabs.query({}, (tabs) => {
+    browser.tabs.query({}).then((tabs) => {
       tabs.forEach((tab) => {
         if (tab.id) {
-          chrome.tabs.sendMessage(tab.id, {
-            type: 'UPDATE_LETTER_SPACING',
-            letterSpacing: newSpacing
+          browser.tabs.sendMessage(tab.id, {
+            type: "UPDATE_LETTER_SPACING",
+            letterSpacing: newSpacing,
           });
         }
       });
     });
   };
 
-
   const handleLineHeightChange = (value: number[]) => {
     const newHeight = value[0];
     setLineHeight(newHeight);
-    chrome.storage.sync.set({ lineHeight: newHeight });
-    
-    chrome.tabs.query({}, (tabs) => {
+    browser.storage.local.set({ lineHeight: newHeight });
+
+    browser.tabs.query({}).then((tabs) => {
       tabs.forEach((tab) => {
         if (tab.id) {
-          chrome.tabs.sendMessage(tab.id, {
-            type: 'UPDATE_LINE_HEIGHT',
-            lineHeight: newHeight
+          browser.tabs.sendMessage(tab.id, {
+            type: "UPDATE_LINE_HEIGHT",
+            lineHeight: newHeight,
           });
         }
       });
@@ -99,20 +99,19 @@ const TextTab: React.FC<TextTabProps> = ({
   const handleWordSpacingChange = (value: number[]) => {
     const newSpacing = value[0];
     setWordSpacing(newSpacing);
-    chrome.storage.sync.set({ wordSpacing: newSpacing });
-    
-    chrome.tabs.query({}, (tabs) => {
+    browser.storage.local.set({ wordSpacing: newSpacing });
+
+    browser.tabs.query({}).then((tabs) => {
       tabs.forEach((tab) => {
         if (tab.id) {
-          chrome.tabs.sendMessage(tab.id, {
-            type: 'UPDATE_WORD_SPACING',
-            wordSpacing: newSpacing
+          browser.tabs.sendMessage(tab.id, {
+            type: "UPDATE_WORD_SPACING",
+            wordSpacing: newSpacing,
           });
         }
       });
     });
   };
-  
 
   return (
     <div className="space-y-5">
@@ -122,26 +121,51 @@ const TextTab: React.FC<TextTabProps> = ({
             Phông chữ
           </Label>
           <Select value={fontFamily} onValueChange={handleFontFamilyChange}>
-            <SelectTrigger id="font-family" className="min-w-40"
-              style={{ 
-                fontFamily: fontFamily === "openDyslexic" ? "'OpenDyslexic', sans-serif" : 
-                fontFamily === "comic" ? "'Comic Sans MS', cursive, sans-serif" : 
-                fontFamily === "arial" ? "'Arial', sans-serif" : 
-                fontFamily === "verdana" ? "'Verdana', sans-serif" : 
-                fontFamily === "lexend" ? "'Lexend', sans-serif" : 
-                fontFamily === "lexieReadble" ? "'LexieReadable', sans-serif" : 
-                fontFamily === "centuryGothic" ? "'Century Gothic', sans-serif" : 
-                'sans-serif' }} >
-              <SelectValue placeholder="Chọn phông chữ"/>
+            <SelectTrigger
+              id="font-family"
+              className="min-w-40"
+              style={{
+                fontFamily:
+                  fontFamily === "openDyslexic"
+                    ? "'OpenDyslexic', sans-serif"
+                    : fontFamily === "comic"
+                    ? "'Comic Sans MS', cursive, sans-serif"
+                    : fontFamily === "arial"
+                    ? "'Arial', sans-serif"
+                    : fontFamily === "verdana"
+                    ? "'Verdana', sans-serif"
+                    : fontFamily === "lexend"
+                    ? "'Lexend', sans-serif"
+                    : fontFamily === "lexieReadble"
+                    ? "'LexieReadable', sans-serif"
+                    : fontFamily === "centuryGothic"
+                    ? "'Century Gothic', sans-serif"
+                    : "sans-serif",
+              }}>
+              <SelectValue placeholder="Chọn phông chữ" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="openDyslexic" style={{ fontFamily: "'OpenDyslexic', sans-serif" }}>OpenDyslexic</SelectItem>
-              <SelectItem value="comic" style={{ fontFamily: "'Comic Sans MS', cursive, sans-serif" }}>Comic Sans</SelectItem>
-              <SelectItem value="arial" style={{ fontFamily: "'Arial', sans-serif" }}>Arial</SelectItem>
-              <SelectItem value="verdana" style={{ fontFamily: "'Verdana', sans-serif" }}>Verdana</SelectItem>
-              <SelectItem value="lexend" style={{ fontFamily: "'Lexend', sans-serif" }}>Lexend</SelectItem>
-              <SelectItem value="lexieReadble" style={{ fontFamily: "'LexieReadable', sans-serif" }}>Lexie Readable</SelectItem>
-              <SelectItem value="centuryGothic" style={{ fontFamily: "'Century Gothic', sans-serif" }}>Century Gothic</SelectItem>
+              <SelectItem value="openDyslexic" style={{ fontFamily: "'OpenDyslexic', sans-serif" }}>
+                OpenDyslexic
+              </SelectItem>
+              <SelectItem value="comic" style={{ fontFamily: "'Comic Sans MS', cursive, sans-serif" }}>
+                Comic Sans
+              </SelectItem>
+              <SelectItem value="arial" style={{ fontFamily: "'Arial', sans-serif" }}>
+                Arial
+              </SelectItem>
+              <SelectItem value="verdana" style={{ fontFamily: "'Verdana', sans-serif" }}>
+                Verdana
+              </SelectItem>
+              <SelectItem value="lexend" style={{ fontFamily: "'Lexend', sans-serif" }}>
+                Lexend
+              </SelectItem>
+              <SelectItem value="lexieReadble" style={{ fontFamily: "'LexieReadable', sans-serif" }}>
+                Lexie Readable
+              </SelectItem>
+              <SelectItem value="centuryGothic" style={{ fontFamily: "'Century Gothic', sans-serif" }}>
+                Century Gothic
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -175,7 +199,7 @@ const TextTab: React.FC<TextTabProps> = ({
           max={10}
           step={0.1}
           value={[letterSpacing]}
-          onValueChange={(handleLetterSpacingChange)}
+          onValueChange={handleLetterSpacingChange}
         />
       </div>
 
@@ -191,7 +215,7 @@ const TextTab: React.FC<TextTabProps> = ({
           max={10}
           step={0.1}
           value={[lineHeight]}
-          onValueChange={(handleLineHeightChange)}
+          onValueChange={handleLineHeightChange}
         />
       </div>
 
@@ -207,7 +231,7 @@ const TextTab: React.FC<TextTabProps> = ({
           max={10}
           step={0.1}
           value={[wordSpacing]}
-          onValueChange={(handleWordSpacingChange)}
+          onValueChange={handleWordSpacingChange}
         />
       </div>
     </div>

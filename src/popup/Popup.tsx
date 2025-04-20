@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TabsSection from "@/components/TabsSection";
 import Preview from "@/components/Preview";
+import browser from "webextension-polyfill";
 
 const Popup: React.FC = () => {
   const [fontSize, setFontSize] = useState(18);
@@ -19,89 +20,98 @@ const Popup: React.FC = () => {
   const [colorTheme, setColorTheme] = useState("cream");
   const [fontFamily, setFontFamily] = useState("openDyslexic");
 
+  // Load text styles & enable state from sync storage
   useEffect(() => {
-    chrome.storage.sync.get(
-      ['fontSize', 'letterSpacing', 'lineHeight', 'wordSpacing', 'fontFamily', 'extensionEnabled'],
-      ({ fontSize, letterSpacing, lineHeight, wordSpacing, fontFamily, extensionEnabled}) => {
-        if (fontSize !== undefined) setFontSize(fontSize);
-        if (letterSpacing !== undefined) setLetterSpacing(letterSpacing);
-        if (lineHeight !== undefined) setLineHeight(lineHeight);
-        if (wordSpacing !== undefined) setWordSpacing(wordSpacing);
-        if (fontFamily !== undefined) setFontFamily(fontFamily);
-        if (extensionEnabled !== undefined) setExtensionEnabled(extensionEnabled);
-  
-        //Tự động apply settings lên web khi mở popup
-        chrome.tabs.query({}, (tabs) => {
-          tabs.forEach((tab) => {
-            if (tab.id) {
-              chrome.tabs.sendMessage(tab.id, {
-                type: 'UPDATE_ALL_STYLES',
-                fontSize,
-                letterSpacing,
-                lineHeight,
-                wordSpacing,
-                fontFamily,
-              });
-            }
+    (async () => {
+      const { fontSize, letterSpacing, lineHeight, wordSpacing, fontFamily, extensionEnabled } =
+        await browser.storage.local.get([
+          "fontSize",
+          "letterSpacing",
+          "lineHeight",
+          "wordSpacing",
+          "fontFamily",
+          "extensionEnabled",
+        ]);
+
+      if (fontSize !== undefined) setFontSize(fontSize as number);
+      if (letterSpacing !== undefined) setLetterSpacing(letterSpacing as number);
+      if (lineHeight !== undefined) setLineHeight(lineHeight as number);
+      if (wordSpacing !== undefined) setWordSpacing(wordSpacing as number);
+      if (fontFamily !== undefined) setFontFamily(fontFamily as string);
+      if (extensionEnabled !== undefined) setExtensionEnabled(extensionEnabled as boolean);
+
+      // Auto apply styles to all tabs
+      const tabs = await browser.tabs.query({});
+      for (const tab of tabs) {
+        if (tab.id !== undefined) {
+          await browser.tabs.sendMessage(tab.id, {
+            type: "UPDATE_ALL_STYLES",
+            fontSize,
+            letterSpacing,
+            lineHeight,
+            wordSpacing,
+            fontFamily,
           });
-        });
+        }
       }
-    );
+    })();
   }, []);
 
+  // Save extension enabled toggle and send message
   useEffect(() => {
-    chrome.storage.sync.set({ extensionEnabled });
-  
-    chrome.tabs.query({}, (tabs) => {
-    tabs.forEach((tab) => {
-      if (tab.id) {
-        chrome.tabs.sendMessage(tab.id, {
-          type: extensionEnabled ? "ENABLE_EXTENSION" : "DISABLE_EXTENSION"
-        });
+    (async () => {
+      await browser.storage.local.set({ extensionEnabled });
+
+      const tabs = await browser.tabs.query({});
+      for (const tab of tabs) {
+        if (tab.id !== undefined) {
+          await browser.tabs.sendMessage(tab.id, {
+            type: extensionEnabled ? "ENABLE_EXTENSION" : "DISABLE_EXTENSION",
+          });
+        }
       }
-    });
-  });
-}, [extensionEnabled]);
+    })();
+  }, [extensionEnabled]);
 
   // Load settings from storage when component mounts
+  // Load ruler config from local storage
   useEffect(() => {
-    chrome.storage.local.get(
-      {
-        ruler: true,
-        rulerHeight: 20,
-        rulerOpacity: 30,
-        rulerColor: "#d9d9d9",
-      },
-      (items) => {
-        setRuler(items.ruler);
-        setRulerHeight(items.rulerHeight);
-        setRulerOpacity(items.rulerOpacity);
-        setRulerColor(items.rulerColor);
-      }
-    );
+    (async () => {
+      const {
+        ruler = true,
+        rulerHeight = 20,
+        rulerOpacity = 30,
+        rulerColor = "#d9d9d9",
+      } = await browser.storage.local.get(["ruler", "rulerHeight", "rulerOpacity", "rulerColor"]);
+
+      setRuler(ruler as boolean);
+      setRulerHeight(rulerHeight as number);
+      setRulerOpacity(rulerOpacity as number);
+      setRulerColor(rulerColor as string);
+    })();
   }, []);
 
-  // Update storage and content script when settings change
+  // Save ruler config + send to content script
   useEffect(() => {
-    const config = {
-      ruler,
-      height: rulerHeight,
-      opacity: rulerOpacity,
-      color: rulerColor,
-    };
+    (async () => {
+      const config = {
+        ruler,
+        height: rulerHeight,
+        opacity: rulerOpacity,
+        color: rulerColor,
+      };
 
-    // Save to storage
-    chrome.storage.local.set(config);
+      await browser.storage.local.set(config);
 
-    // Send message to content script
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, {
+      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+      const tab = tabs[0];
+      if (tab?.id !== undefined) {
+        await browser.tabs.sendMessage(tab.id, {
           type: "UPDATE_RULER",
           config,
         });
       }
-    });
+    })();
   }, [ruler, rulerHeight, rulerOpacity, rulerColor]);
 
   return (
@@ -144,7 +154,7 @@ const Popup: React.FC = () => {
             colorTheme={colorTheme}
           />
         </CardContent>
-        <Footer/>
+        <Footer />
       </Card>
     </div>
   );

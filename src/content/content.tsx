@@ -1,3 +1,5 @@
+import browser from 'webextension-polyfill';
+
 applyClassStyles();
 
 interface StyleMessage {
@@ -34,10 +36,10 @@ interface StyleMessage {
 
       root.setProperty('--font-family', fallback);
     }
-  }
-
-  chrome.runtime.onMessage.addListener(
-    (message: StyleMessage, sender: chrome.runtime.MessageSender, sendResponse: (response: { success: boolean }) => void) => {
+}
+  
+  browser.runtime.onMessage.addListener(
+    (message: StyleMessage, _sender: browser.runtime.MessageSender, sendResponse: (response: { success: boolean }) => void) => {
       switch (message.type) {
         case 'UPDATE_FONT_SIZE':
           updateStyles({ fontSize: message.fontSize });
@@ -73,6 +75,7 @@ interface StyleMessage {
           console.log('Unknown message type:', message.type);
       }
       sendResponse({ success: true });
+      return true;
     }
   );
 
@@ -89,13 +92,13 @@ interface StyleMessage {
         
         @font-face {
           font-family: 'OpenDyslexic';
-          src: url('${chrome.runtime.getURL("fonts/OpenDyslexic-Regular.woff2")}') format('woff2');
+          src: url('${browser.runtime.getURL("fonts/OpenDyslexic-Regular.woff2")}') format('woff2');
           font-weight: normal;
           font-style: normal;
         }
         @font-face {
           font-family: 'Lexie Readable';
-          src: url('${chrome.runtime.getURL("fonts/LexieReadable-Regular.woff2")}') format('woff2');
+          src: url('${browser.runtime.getURL("fonts/LexieReadable-Regular.woff2")}') format('woff2');
           font-weight: normal;
           font-style: normal;
         }
@@ -114,12 +117,18 @@ interface StyleMessage {
     document.documentElement.classList.add('readability-mode');
   }
   
-  chrome.storage.sync.get(['extensionEnabled'], ({ extensionEnabled }) => {
+  browser.storage.local.get(['extensionEnabled']).then(({ extensionEnabled }) => {
     if (extensionEnabled) {
-      chrome.storage.sync.get(
-        ['fontSize', 'letterSpacing', 'lineHeight', 'wordSpacing', 'fontFamily'],
-        ({ fontSize, letterSpacing, lineHeight, wordSpacing, fontFamily }) => {
-          updateStyles({ fontSize, letterSpacing, lineHeight, wordSpacing, fontFamily });
+      browser.storage.local.get(
+        ['fontSize', 'letterSpacing', 'lineHeight', 'wordSpacing', 'fontFamily']).then(
+        (result) => {
+          updateStyles({ 
+            fontSize: result.fontSize as number | undefined, 
+            letterSpacing: result.letterSpacing as number | undefined, 
+            lineHeight: result.lineHeight as number | undefined, 
+            wordSpacing: result.wordSpacing as number | undefined, 
+            fontFamily: result.fontFamily as string | undefined 
+          });
           applyClassStyles();
         }
       );

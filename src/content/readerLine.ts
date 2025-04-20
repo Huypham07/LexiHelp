@@ -1,3 +1,5 @@
+import browser from 'webextension-polyfill';
+
 // Content script to inject and manage the reading ruler
 interface RulerConfig {
   ruler: boolean;
@@ -39,7 +41,7 @@ document.addEventListener('mousemove', (e) => {
 });
 
 // Listen for messages from popup
-chrome.runtime.onMessage.addListener((message) => {
+browser.runtime.onMessage.addListener((message: any) => {
   if (message.type === 'UPDATE_RULER') {
     updateRuler(message.config);
   }
