@@ -15,13 +15,13 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        background: resolve(__dirname, 'src/background.js'),
-        content: resolve(__dirname, 'src/content/readerLine.js'),
+        background: resolve(__dirname, 'src/background/background.ts'),
+        content: resolve(__dirname, 'src/content/readerLine.ts'),
       },
       output: {
         entryFileNames: (chunk) => {
           return chunk.name === 'background' ? 'src/background.js' :
-            chunk.name === 'content' ? 'src/readerLine.js' :
+            chunk.name === 'content' ? 'src/content.js' :
               'assets/[name]-[hash].js';
         },
       },

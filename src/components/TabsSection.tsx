@@ -18,6 +18,12 @@ interface TabsSectionProps {
   setTtsHighlight: (value: boolean) => void;
   ruler: boolean;
   setRuler: (value: boolean) => void;
+  rulerHeight: number;
+  setRulerHeight: (value: number) => void;
+  rulerOpacity: number;
+  setRulerOpacity: (value: number) => void;
+  rulerColor: string;
+  setRulerColor: (value: string) => void;
   colorTheme: string;
   setColorTheme: (value: string) => void;
 }
@@ -35,6 +41,12 @@ const TabsSection: React.FC<TabsSectionProps> = ({
   setTtsHighlight,
   ruler,
   setRuler,
+  rulerHeight,
+  setRulerHeight,
+  rulerColor,
+  setRulerColor,
+  rulerOpacity,
+  setRulerOpacity,
   colorTheme,
   setColorTheme,
 }) => {
@@ -77,7 +89,15 @@ const TabsSection: React.FC<TabsSectionProps> = ({
       </TabsContent>
 
       <TabsContent value="ruler">
-        <RulerTab ruler={ruler} setRuler={setRuler} />
+        <RulerTab 
+          ruler={ruler}
+          setRuler={setRuler}
+          rulerHeight={rulerHeight}
+          setRulerHeight={setRulerHeight}
+          rulerOpacity={rulerOpacity}
+          setRulerOpacity={setRulerOpacity}
+          rulerColor={rulerColor}
+          setRulerColor={setRulerColor} />
       </TabsContent>
 
       <TabsContent value="tools">
