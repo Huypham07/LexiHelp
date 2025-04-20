@@ -1,6 +1,5 @@
 import React, { ForwardedRef, forwardRef, useImperativeHandle } from "react";
 import browser from "webextension-polyfill";
-import { isFirefox } from "../utils/browserDetection";
 interface PreviewProps {
   fontSize: number;
   letterSpacing: number;
@@ -29,22 +28,10 @@ const Preview = forwardRef<PreviewRefs, PreviewProps>(
             return;
           }
 
-          if (isFirefox()) {
-            // inject postMessage in page context
-            await browser.scripting.executeScript({
-              target: { tabId: tab.id },
-              func: (text) => {
-                window.postMessage({ action: "readSelection", text }, "*");
-              },
-              args: [previewText],
-            });
-          } else {
-            // send message to content script
-            await browser.tabs.sendMessage(tab.id, {
+          await browser.tabs.sendMessage(tab.id, {
               action: "readSelection",
               text: previewText,
             });
-          }
         } catch (error) {
           console.error("Error sending TTS message:", error);
         }

@@ -6,7 +6,6 @@ import {
   updatePanelContent,
   updatePlayPauseButton,
 } from "@/components/controlPanel";
-import { isFirefox } from "@/utils/browserDetection";
 import { Readability } from "@mozilla/readability";
 import { franc } from "franc";
 import { languageVoiceMap } from "@/utils/languageVoiceMap";
@@ -97,17 +96,10 @@ export async function initTTS(text) {
               sourceBuffer.appendBuffer(safeChunk);
 
               if (isFirstChunk) {
-                if (isFirefox()) {
-                  setTimeout(() => {
-                    audioElement.play().catch((err) => {
-                      console.warn("Firefox autoplay workaround failed:", err);
-                    });
-                  }, 0);
-                } else {
-                  audioElement.play().catch((err) => {
-                    console.warn("Audio playback failed:", err);
-                  });
-                }
+                audioElement.play().catch((err) => {
+                  console.warn("Audio playback failed:", err);
+                });
+
                 isFirstChunk = false;
               }
             }
