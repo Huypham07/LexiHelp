@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useEffect, useState } from "react";
 import browser from "webextension-polyfill";
 import React from "react";
+import { sendToggleMessage, ToggleMessage } from "@/background/background";
 
 interface ToolsTabProps {
   voice: string;
@@ -76,10 +77,11 @@ const ToolsTab: React.FC<ToolsTabProps> = ({
     browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
       const tab = tabs[0];
       if (tab?.id) {
-        browser.tabs.sendMessage(tab.id, {
+        const message: ToggleMessage = {
           action: "setRemoveDistractions",
           enabled: enable,
-        });
+        }
+        sendToggleMessage(tab.id, message);
       }
     });
   };

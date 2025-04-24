@@ -15,7 +15,8 @@
   },
   "host_permissions": [
     "https://speech.platform.bing.com/*",
-    "wss://speech.platform.bing.com/*"
+    "wss://speech.platform.bing.com/*",
+    "http://localhost:8000/*"
   ],
   "permissions": ["contextMenus", "activeTab", "scripting", "storage"],
   "content_scripts": [

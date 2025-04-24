@@ -1,3 +1,4 @@
+import { sendTextMessage, TextMessage } from "@/background/background";
 import React, { ForwardedRef, forwardRef, useImperativeHandle } from "react";
 import browser from "webextension-polyfill";
 interface PreviewProps {
@@ -27,11 +28,11 @@ const Preview = forwardRef<PreviewRefs, PreviewProps>(
             console.error("No active tab found");
             return;
           }
-
-          await browser.tabs.sendMessage(tab.id, {
-              action: "readSelection",
-              text: previewText,
-            });
+          const message: TextMessage = {
+            action: "readSelection",
+            text: previewText,
+          }
+          sendTextMessage(tab.id, message);
         } catch (error) {
           console.error("Error sending TTS message:", error);
         }

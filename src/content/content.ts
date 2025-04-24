@@ -9,6 +9,7 @@ import {
 import { Readability } from "@mozilla/readability";
 import { franc } from "franc";
 import { languageVoiceMap } from "@/utils/languageVoiceMap";
+import { TextMessage, ToggleMessage } from "@/background/background";
 
 let audioElement: any = null;
 let isPlaying = false;
@@ -202,21 +203,16 @@ function removeControlPanel() {
   controlPanel = null;
 }
 
-// Define the message structure
-interface ExtensionMessage {
-  action: string;
-  text?: string;
-}
-
 // Message listener with type assertion to bypass strict type checking
-browser.runtime.onMessage.addListener(function handleMessage(request: ExtensionMessage, sender, sendResponse) {
-  if (request.action === "stopPlayback") {
+browser.runtime.onMessage.addListener(async (message: TextMessage) => {
+  const { action, text } = message;
+  if (action === "stopPlayback") {
     stopPlayback();
-  } else if (request.action === "readSelection") {
-    initTTS(request.text).catch((error) => {
+  } else if (action === "readSelection") {
+    initTTS(text).catch((error) => {
       console.error("TTS initialization error:", error);
     });
-  } else if (request.action === "readPage") {
+  } else if (action === "readPage") {
     // Extract the page content
     const pageContent = document.body.innerText;
 
@@ -227,10 +223,128 @@ browser.runtime.onMessage.addListener(function handleMessage(request: ExtensionM
     } else {
       console.warn("The page content is empty.");
     }
+  } else if (action === "quick-summary" || action === "smart-summary") {
+    showSummarizingNotice();
+
+    try {
+      const type = action;
+      const summary = await sendSummaryRequest(type, text);
+      await showSummaryPopup(summary);
+    } catch (err) {
+      showErrorPopup(err.message);
+    }
   }
 
   return true; // Always return true for polyfill compatibility
-} as browser.Runtime.OnMessageListener);
+});
+
+async function sendSummaryRequest(type: "quick-summary" | "smart-summary", text: string): Promise<string> {
+  const endpoint = `http://localhost:8000/api/summarize/${type === "quick-summary" ? "textrank" : "abstract"}`;
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (response.ok) {
+    const data = await response.json();
+    return data.summary;
+  } else {
+    switch (response.status) {
+      case 500:
+        throw new Error("Server error: Please try again later.");
+      case 400:
+        throw new Error(await response.json().then((data) => data.detail));
+      case 406:
+        throw new Error(await response.json().then((data) => data.detail));
+      case 422:
+        throw new Error("Invalid input: Please check the text you provided.");
+      default:
+        throw new Error("An unknown error occurred. Please try again.");
+    }
+  }
+}
+
+function showSummarizingNotice() {
+  const notice = document.createElement("div");
+  notice.innerText = "⏳ Generating summary...";
+  notice.style.cssText = `
+    position:fixed;top:10px;right:10px;
+    background:#2196f3;color:#fff;padding:10px 15px;
+    border-radius:8px;z-index:9999;font-size:16px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.2);
+  `;
+  document.body.appendChild(notice);
+  setTimeout(() => notice.remove(), 2000);
+}
+
+async function showSummaryPopup(summary: string) {
+  const styles = await getUserStyles();
+
+  const popup = document.createElement("div");
+  popup.innerHTML = `<h3>📄 Summary:</h3><p>${summary}</p>`;
+  popup.style.cssText = `
+      position:fixed; top:20%; left:50%; transform:translateX(-50%);
+      background:#fff; padding:20px; border:1px solid #ccc; border-radius:10px;
+      box-shadow:0 4px 8px rgba(0,0,0,0.2); max-width:400px; z-index:10000;
+      font-size:${styles.fontSize};
+      line-height:${styles.lineHeight};
+      font-family:${styles.fontFamily};
+      letter-spacing:${styles.letterSpacing};
+      word-spacing:${styles.wordSpacing};
+  `;
+
+  const closeBtn = document.createElement("button");
+  closeBtn.innerText = "Close";
+  closeBtn.style.cssText = `
+      margin-top:10px; padding:5px 10px; background:#2196f3; color:white;
+      border:none; border-radius:5px; cursor:pointer;
+  `;
+  closeBtn.onclick = () => popup.remove();
+
+  popup.appendChild(closeBtn);
+  document.body.appendChild(popup);
+}
+
+function showErrorPopup(msg: string) {
+  const popup = document.createElement("div");
+  popup.innerText = msg;
+  popup.style.cssText = `
+    position:fixed;top:10px;right:10px;
+    background:#e53935;color:#fff;padding:10px;
+    border-radius:8px;z-index:9999;font-size:16px;
+  `;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 3000);
+}
+
+async function getUserStyles() {
+  const settings = await browser.storage.local.get([
+    "extensionEnabled",
+    "fontSize",
+    "letterSpacing",
+    "lineHeight",
+    "wordSpacing",
+    "colorTheme",
+  ]);
+  if (settings.extensionEnabled) {
+    return {
+      fontSize: settings.fontSize || "16px",
+      lineHeight: settings.lineHeight || "1.5",
+      fontFamily: settings.fontFamily || "OpenDyslexic, Arial, sans-serif",
+      letterSpacing: settings.letterSpacing || "0.05em",
+      wordSpacing: settings.wordSpacing || "0.1em",
+    };
+  } else {
+    return {
+      fontSize: "16px",
+      lineHeight: "1.5",
+      fontFamily: "OpenDyslexic, Arial, sans-serif",
+      letterSpacing: "0.05em",
+      wordSpacing: "0.1em",
+    };
+  }
+}
 
 window.addEventListener("message", (event) => {
   if (event.source !== window) return;
@@ -245,7 +359,7 @@ window.addEventListener("message", (event) => {
 
 let removeDistractions = false;
 
-browser.runtime.onMessage.addListener((message) => {
+browser.runtime.onMessage.addListener((message: ToggleMessage) => {
   if (message.action === "setRemoveDistractions") {
     if (message.enabled) {
       enableReaderMode();
