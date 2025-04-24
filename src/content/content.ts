@@ -239,7 +239,7 @@ browser.runtime.onMessage.addListener(async (message: TextMessage) => {
 });
 
 async function sendSummaryRequest(type: "quick-summary" | "smart-summary", text: string): Promise<string> {
-  const endpoint = `http://localhost:8000/api/summarize/${type === "quick-summary" ? "textrank" : "abstract"}`;
+  const endpoint = `http://localhost:8000/api/summarize/${type === "quick-summary" ? "extract" : "abstract"}`;
 
   const response = await fetch(endpoint, {
     method: "POST",
