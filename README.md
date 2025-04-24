@@ -48,7 +48,7 @@ A browser extension designed to improve web readability, especially for individu
 1. Clone this repository
    ```
    git clone https://github.com/Huypham07/LexiHelp.git
-   cd frontend/
+   cd extension/
    ```
 2. Install dependencies:
    ```
