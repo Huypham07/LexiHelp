@@ -72,8 +72,8 @@ const colorPalette1: string[] = [
 // neutral, vibrant(tạm ổn), subtle, pastel
 const colorPalette2: string[] = [
     '#424242', // Dark Gray
-    '#5e35b1', // Dark Purple
     '#d84315', // Orange Red
+    '#5e35b1', // Dark Purple
     '#00897b' // Teal
 ];
 
@@ -91,10 +91,14 @@ const colorPalette3 = [
 
 // Hightconstrast, softcontrast, warmandcalm, green
 const colorPalette4 = [
-    "#2979ff", // hot blue
-    "#f57c00", // orange
-    "#388e3C", // green
-    "#c2185b", // pink
+    // "#2979ff", // hot blue
+    // "#f57c00", // orange
+    // "#388e3C", // green
+    // "#c2185b", // pinkXanh dương đậm: #005566
+    '#F28C38', // Cam
+    '#AB47BC', // Tím
+    '#66BB6A', // Xanh lá
+    '#455A64' // Xám đen
 ];
 
 // Map để lưu trữ node văn bản gốc và nội dung gốc của nó
@@ -203,7 +207,7 @@ function getCurrentPalette(): Promise<string[]> {
             const theme = result.theme || 'default';
             if (theme === 'neutral' || theme === 'vibrant' || theme === 'subtle and relaxed' || theme === 'pastel') {
                 resolve(colorPalette2);
-            } else if (theme === 'light' || theme === 'highlight' || theme === 'dark' || theme === 'muted') {
+            } else if (theme === 'light' || theme === 'hightlight' || theme === 'dark' || theme === 'muted') {
                 resolve(colorPalette3);
             } else if (theme === 'high contrast' || theme === 'soft contrast' || theme === 'warm and calm' || theme === 'green' || theme === 'default') {
                 resolve(colorPalette4);
