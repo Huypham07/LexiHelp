@@ -1,3 +1,4 @@
+import { getBackgroundColor, getTextColorByHex } from "@/utils/utils";
 export const getActualFontFamily = (fontKey: string): string => {
   switch (fontKey) {
     case "comic":
@@ -44,19 +45,8 @@ const Preview: React.FC<PreviewProps> = ({
     <div
       className="preview-container p-4 rounded-lg shadow-md border"
       style={{
-        background:
-          colorTheme === "cream"
-            ? "#f8f3e3"
-            : colorTheme === "dark"
-            ? "#222"
-            : colorTheme === "blue"
-            ? "#e6f3ff"
-            : colorTheme === "yellow"
-            ? "#fffde7"
-            : colorTheme === "green"
-            ? "#e8f5e9"
-            : "#f5f5f5",
-        color: colorTheme === "dark" ? "#fff" : "#333",
+        background: getBackgroundColor(colorTheme),
+        color: getTextColorByHex(colorTheme)
       }}>
       <h3 className="text-sm font-medium mb-2">Preview</h3>
       <p
@@ -67,7 +57,7 @@ const Preview: React.FC<PreviewProps> = ({
           lineHeight: lineHeight,
           wordSpacing: `${wordSpacing * 0.1}em`,
           fontFamily: getActualFontFamily(fontFamily),
-          color: colorTheme === "dark" ? "#fff" : "#333",
+          color: getTextColorByHex(colorTheme),
         }}>
         {ttsHighlight ? (
           "This is how your text will look with the current settings."

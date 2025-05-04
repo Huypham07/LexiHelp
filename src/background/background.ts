@@ -16,6 +16,23 @@ browser.runtime.onInstalled.addListener(() => {
     });
 })
 
+browser.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === 'readSelection' && info.selectionText && tab?.id !== undefined) {
+        // Handle reading selected text
+        browser.tabs.sendMessage(tab.id, {
+            action: 'readSelection',
+            text: info.selectionText,
+        });
+        console.log('Selected text:', info.selectionText);
+    } else if (info.menuItemId === 'readPage' && tab?.id !== undefined) {
+        // Handle reading the entire page
+        browser.tabs.sendMessage(tab.id, {
+            action: 'readPage',
+        });
+        console.log('Reading the entire page content.');
+    }
+});
+
 // Set default values when the extension is installed
 browser.runtime.onInstalled.addListener(() => {
   browser.storage.local.get(['rulerConfig']).then((result) => {
