@@ -59,14 +59,17 @@ const colorPalette: string[] = [
     '#e31a1c' // Red (dùng cẩn thận, tránh cạnh xanh lá)
 ];
 
+// muted, dark, highlight, light
+// Hợp với nền tối, tệ với nền sáng
 const colorPalette1: string[] = [
     '#FFEB3B', // Yellow
     '#FF5722', // Deep Orange
     '#2196F3', // Blue
-    '#9C27B0'  // Purple
+    '#81c784'  // Green
 ];
 
 // Hợp với nền sáng, tệ với nền tối
+// neutral, vibrant(tạm ổn), subtle, pastel
 const colorPalette2: string[] = [
     '#424242', // Dark Gray
     '#5e35b1', // Dark Purple
@@ -74,13 +77,8 @@ const colorPalette2: string[] = [
     '#00897b' // Teal
 ];
 
-const colorPalette5: string[] = [
-    'fffacd', // Lemon Chiffon
-    '4682b4', // Dark Slate Blue
-    'ffddee', // Lavender Blush
-    'd2b48c' // Tan
-];
-
+//light, highlight, dark, muted
+// Hợp với nền tối, tệ với nền sáng
 const colorPalette3 = [
     "#4fc3f7", // blue
     "#81c784", // green
@@ -91,7 +89,7 @@ const colorPalette3 = [
     "#f48fb1", // pink
 ];
 
-// Hợp nền tối
+// Hightconstrast, softcontrast, warmandcalm, green
 const colorPalette4 = [
     "#2979ff", // hot blue
     "#f57c00", // orange
@@ -199,6 +197,23 @@ function getPseudoSyllables(text: string): string[] {
     return syllables;
 }
 
+function getCurrentPalette(): Promise<string[]> {
+    return new Promise((resolve) => {
+        chrome.storage.local.get('theme', (result) => {
+            const theme = result.theme || 'default';
+            if (theme === 'neutral' || theme === 'vibrant' || theme === 'subtle and relaxed' || theme === 'pastel') {
+                resolve(colorPalette2);
+            } else if (theme === 'light' || theme === 'highlight' || theme === 'dark' || theme === 'muted') {
+                resolve(colorPalette3);
+            } else if (theme === 'high contrast' || theme === 'soft contrast' || theme === 'warm and calm' || theme === 'green' || theme === 'default') {
+                resolve(colorPalette4);
+            } else {
+                resolve(colorPalette); // Mặc định
+            }
+        });
+    });
+}
+
 // Hàm tô màu các "âm tiết" trong một node văn bản
 function colorizeTextNode(node: Text) {
     const text: string = node.nodeValue || '';
@@ -207,31 +222,66 @@ function colorizeTextNode(node: Text) {
     const fragment = document.createDocumentFragment();
     let colorIndex = 0;
 
-    wordsAndSpaces.forEach((part: string) => {
-        if (part.match(/^\s+$/)) {
-            // Nếu là khoảng trắng, thêm text node khoảng trắng
-            fragment.appendChild(document.createTextNode(part));
-        } else if (part.length > 0) {
-            // Nếu là từ, chia và tô màu
-            const pseudoSyllables = getPseudoSyllables(part);
+    // wordsAndSpaces.forEach((part: string) => {
+    //     if (part.match(/^\s+$/)) {
+    //         // Nếu là khoảng trắng, thêm text node khoảng trắng
+    //         fragment.appendChild(document.createTextNode(part));
+    //     } else if (part.length > 0) {
+    //         // Nếu là từ, chia và tô màu
+    //         const pseudoSyllables = getPseudoSyllables(part);
 
-            pseudoSyllables.forEach(syllable => {
-                const span = document.createElement('span');
-                span.textContent = syllable;
-                span.style.color = colorPalette4[colorIndex % colorPalette4.length];
-                // Thêm class để dễ nhận diện khi tắt
-                span.classList.add('dyslexia-color-syllable');
-                colorIndex++; // Chuyển sang màu tiếp theo
+    //         // Chọn bảng màu
+    //         let currentPalette = colorPalette; // Mặc định là bảng màu 0
+    //         chrome.storage.local.get('theme', (result) => {
+    //             const theme = result.theme || 'default'; // Lấy theme từ storage
+    //             if (theme === 'neutral' || 'vibrant'|| 'subtle and relaxed' || 'pastel') {
+    //                 currentPalette = colorPalette2; // Chọn bảng màu 2
+    //             } else if (theme === 'light' || 'highlight' || 'dark' || 'muted') {
+    //                 currentPalette = colorPalette3; // Chọn bảng màu 3
+    //             } else if (theme === 'high contrast' || 'soft contrast' || 'warm and calm' || 'green' || 'default') {
+    //                 currentPalette = colorPalette4; // Chọn bảng màu 4
+    //             }
+    //         });
+    //         // Tô màu cho từng âm tiết
+    //         pseudoSyllables.forEach(syllable => {
+    //             const span = document.createElement('span');
+    //             span.textContent = syllable;
+    //             span.style.color = currentPalette[colorIndex % currentPalette.length];
+    //             // Thêm class để dễ nhận diện khi tắt
+    //             span.classList.add('dyslexia-color-syllable');
+    //             colorIndex++; // Chuyển sang màu tiếp theo
 
-                fragment.appendChild(span);
-            });
-        }
+    //             fragment.appendChild(span);
+    //         });
+    //     }
+    // });
+
+    // // Lưu trữ node gốc trước khi thay thế
+    // originalTextNodes.set(node, text);
+    // // Thay thế node văn bản gốc bằng fragment đã được tô màu
+    // node.parentNode?.replaceChild(fragment, node);
+
+    getCurrentPalette().then((currentPalette) => {
+        wordsAndSpaces.forEach((part: string) => {
+            if (part.match(/^\s+$/)) {
+                fragment.appendChild(document.createTextNode(part));
+            } else if (part.length > 0) {
+                const pseudoSyllables = getPseudoSyllables(part);
+
+                pseudoSyllables.forEach((syllable) => {
+                    const span = document.createElement('span');
+                    span.textContent = syllable;
+                    span.style.color = currentPalette[colorIndex % currentPalette.length];
+                    span.classList.add('dyslexia-color-syllable');
+                    colorIndex++;
+                    fragment.appendChild(span);
+                });
+            }
+        });
+
+        originalTextNodes.set(node, text);
+        node.parentNode?.replaceChild(fragment, node);
     });
-
-    // Lưu trữ node gốc trước khi thay thế
-    originalTextNodes.set(node, text);
-    // Thay thế node văn bản gốc bằng fragment đã được tô màu
-    node.parentNode?.replaceChild(fragment, node);
 
     //Lưu thông tin vào storage
     chrome.storage.local.set({ proccessedText: text });
