@@ -14,20 +14,6 @@ browser.runtime.onInstalled.addListener(() => {
         title: "Read Page Aloud with LexiHelp",
         contexts: ["page"],
     });
-
-    // add context menu for changing color for selected text
-    browser.contextMenus.create({
-        id: "changeColor",
-        title: "Change Color of Selected Text",
-        contexts: ["selection"],
-    });
-
-    // add context menu for changing color for entire page
-    browser.contextMenus.create({
-        id: "changeColorPage",
-        title: "Change Color of Page",
-        contexts: ["page"],
-    });
 })
 
 browser.contextMenus.onClicked.addListener((info, tab) => {

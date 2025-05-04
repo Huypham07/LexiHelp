@@ -18,6 +18,8 @@ export function getBackgroundColor(colorTheme: string): string {
       return "#333333";
     case "muted":
       return "#2F4F4F";
+    case "default":
+      return "";
     default:
       return "#FFFFFF"; // Default background color
   }
@@ -48,6 +50,8 @@ export function getTextColorByHex (colorTheme: string) : string {
             return "#FFFFFF";
         case "pastel":
             return "#4B0082";
+        case "default":
+            return "";
         default:
             return "#000"; // Default color for custom or other themes
     }
@@ -77,6 +81,8 @@ export function getTextColorByTailwind(colorTheme: string): string {
       return "text-white"; // Tailwind class for white text
     case "pastel":
       return "text-indigo-700"; // Tailwind class for a pastel indigo color
+    case "default":
+      return "";
     default:
       return "text-black"; // Default Tailwind class for black text
   }
