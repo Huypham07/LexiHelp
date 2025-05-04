@@ -13,7 +13,7 @@ const Popup: React.FC = () => {
   const [ttsHighlight, setTtsHighlight] = useState(false);
   const [ruler, setRuler] = useState(false);
   const [extensionEnabled, setExtensionEnabled] = useState(true);
-  const [colorTheme, setColorTheme] = useState("high contrast");
+  const [colorTheme, setColorTheme] = useState("default");
 
   return (
     <div className="popup-container">
