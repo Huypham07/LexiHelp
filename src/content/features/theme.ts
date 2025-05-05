@@ -74,10 +74,14 @@ const colorPalette3 = [
 
 // Hợp nền tối
 const colorPalette4 = [
-  "#2979ff", // hot blue
-  "#f57c00", // orange
-  "#388e3C", // green
-  "#c2185b", // pink
+  // "#2979ff", // hot blue
+  // "#f57c00", // orange
+  // "#388e3C", // green
+  // "#c2185b", // pinkXanh dương đậm: #005566
+  "#F28C38", // Cam
+  "#AB47BC", // Tím
+  "#66BB6A", // Xanh lá
+  "#455A64", // Xám đen
 ];
 
 // Map để lưu trữ node văn bản gốc và nội dung gốc của nó
@@ -407,7 +411,6 @@ export async function applyThemeToTab(tabId: number, enabled: boolean, theme?: s
     });
   }
 }
-
 
 export async function applyColorCodingToTab(tabId: number, enabled: boolean) {
   await browser.tabs.sendMessage(tabId, {
