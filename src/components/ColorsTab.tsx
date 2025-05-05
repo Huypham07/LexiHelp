@@ -1,111 +1,20 @@
 import { Label } from "./ui/label";
 import ThemeOption from "./ThemeOption";
-import { getTextColorByHex, getBackgroundColor } from "@/utils/utils";
-import { useEffect, useState } from "react";
+import React from "react";
 import { Button } from "./ui/button";
-import browser from "webextension-polyfill";
 
 interface ColorsTabProps {
   colorTheme: string;
   setColorTheme: (value: string) => void;
+  colorCodingEnabled: boolean;
+  setColorCodingEnabled: (value: boolean) => void;
 }
 
-const ColorsTab: React.FC<ColorsTabProps> = ({ colorTheme, setColorTheme }) => {
-  const [isColorCodingEnabled, setIsColorCodingEnabled] = useState(false);
-  // Function to handle theme change and send message to content script
-  // This function is called when a theme is selected
-  // It updates the colorTheme state and sends a message to the content script to apply the colors
-  const handleApplyColor = (theme: string) => {
-    setColorTheme(theme);
-    browser.tabs
-      .query({ active: true, currentWindow: true })
-      .then((tabs) => {
-        const activeTabId = tabs?.[0]?.id;
-        if (activeTabId) {
-          if (theme === "default") {
-            browser.scripting
-              .executeScript({
-                target: { tabId: activeTabId },
-                func: () => {
-                  document.body.style.backgroundColor = "";
-                  document.body.style.color = "";
-                  const elements = document.querySelectorAll("*");
-                  elements.forEach((el) => {
-                    if (el instanceof HTMLElement) {
-                      el.style.backgroundColor = "";
-                      el.style.color = "";
-                    }
-                  });
-                },
-              })
-              .then(() => {
-                console.log("Default theme reset.");
-              })
-              .catch((err) => {
-                console.error("Script execution failed:", err);
-              });
-          } else {
-            browser.tabs
-              .sendMessage(activeTabId, {
-                action: "applyColors",
-                textColor: getTextColorByHex(theme),
-                backgroundColor: getBackgroundColor(theme),
-              })
-              .then((response) => {
-                console.log("Colors applied successfully:", response);
-              })
-              .catch((err) => {
-                console.error("Error sending message:", err);
-              });
-          }
-        } else {
-          console.warn("No active tab found.");
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to query tabs:", err);
-      });
-
-    browser.storage.local.set({
-      textColor: getTextColorByHex(theme),
-      backgroundColor: getBackgroundColor(theme),
-      theme: theme,
-    });
-  };
-
+const ColorsTab: React.FC<ColorsTabProps> = ({ colorTheme, setColorTheme, colorCodingEnabled, setColorCodingEnabled }) => {
   // Function to handle color coding
-  const handleColorCoding = () => {
-    // Check if color coding is enabled or disabled
-    chrome.storage.local.get("colorCodingEnabled", (result) => {
-      const isEnabled = result.colorCodingEnabled || false;
-      // Toggle the color coding state
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const activeTabId = tabs?.[0]?.id;
-        if (activeTabId) {
-          chrome.tabs.sendMessage(activeTabId, { action: "setColorCoding", enabled: !isEnabled }, () => {
-            if (chrome.runtime.lastError) {
-              setIsColorCodingEnabled(!isEnabled); // Update state
-            }
-          });
-        }
-      });
-    });
-
-    //Lưu trang thái color coding vào chrome.storage.local
-    chrome.storage.local.set({ colorCodingEnabled: true });
+  const handleColorCoding = async () => {
+    setColorCodingEnabled(!colorCodingEnabled); // Update the state immediately
   };
-
-  // Load default theme from chrome.storage.local when the component mounts
-  useEffect(() => {
-    chrome.storage.local.get(["theme", "colorCodingEnabled"], (result) => {
-      if (result.theme) {
-        setColorTheme(result.theme); // Set the default theme
-      }
-      if (result.colorCodingEnabled) {
-        setIsColorCodingEnabled(result.colorCodingEnabled); // Set the color coding state
-      }
-    });
-  }, [setColorTheme, setIsColorCodingEnabled]);
 
   return (
     <div className="space-y-5">
@@ -119,84 +28,84 @@ const ColorsTab: React.FC<ColorsTabProps> = ({ colorTheme, setColorTheme }) => {
           <ThemeOption
             theme="default"
             isSelected={colorTheme === "default"}
-            onClick={() => handleApplyColor("default")}
+            onClick={() => setColorTheme("default")}
             bgColor="bg-[#FFFFFF]"
           />
           <ThemeOption
             theme="high contrast"
             isSelected={colorTheme === "high contrast"}
-            onClick={() => handleApplyColor("high contrast")}
+            onClick={() => setColorTheme("high contrast")}
             bgColor="bg-[#FFFFFF]"
           />
           <ThemeOption
             theme="soft contrast"
             isSelected={colorTheme === "soft contrast"}
-            onClick={() => handleApplyColor("soft contrast")}
+            onClick={() => setColorTheme("soft contrast")}
             bgColor="bg-[#FFF8DC]"
           />
           <ThemeOption
             theme="warm and calm"
             isSelected={colorTheme === "warm and calm"}
-            onClick={() => handleApplyColor("warm and calm")}
+            onClick={() => setColorTheme("warm and calm")}
             bgColor="bg-[#FFFFE0]"
           />
           <ThemeOption
             theme="green"
             isSelected={colorTheme === "green"}
-            onClick={() => handleApplyColor("green")}
+            onClick={() => setColorTheme("green")}
             bgColor="bg-[#E8F5E9]"
           />
           <ThemeOption
             theme="neutral"
             isSelected={colorTheme === "neutral"}
-            onClick={() => handleApplyColor("neutral")}
+            onClick={() => setColorTheme("neutral")}
             bgColor="bg-[#D3D3D3]"
           />
           <ThemeOption
             theme="vibrant"
             isSelected={colorTheme === "vibrant"}
-            onClick={() => handleApplyColor("vibrant")}
+            onClick={() => setColorTheme("vibrant")}
             bgColor="bg-[#F4C2C2]"
           />
           <ThemeOption
             theme="subtle and relaxed"
             isSelected={colorTheme === "subtle and relaxed"}
-            onClick={() => handleApplyColor("subtle and relaxed")}
+            onClick={() => setColorTheme("subtle and relaxed")}
             bgColor="bg-[#F5F5DC]"
           />
           <ThemeOption
             theme="pastel"
             isSelected={colorTheme === "pastel"}
-            onClick={() => handleApplyColor("pastel")}
+            onClick={() => setColorTheme("pastel")}
             bgColor="bg-[#E6E6FA]"
           />
           <ThemeOption
             theme="hightlight"
             isSelected={colorTheme === "hightlight"}
-            onClick={() => handleApplyColor("hightlight")}
+            onClick={() => setColorTheme("hightlight")}
             bgColor="bg-[#003366]"
           />
           <ThemeOption
             theme="dark"
             isSelected={colorTheme === "dark"}
-            onClick={() => handleApplyColor("dark")}
+            onClick={() => setColorTheme("dark")}
             bgColor="bg-[#000000]"
           />
           <ThemeOption
             theme="light"
             isSelected={colorTheme === "light"}
-            onClick={() => handleApplyColor("light")}
+            onClick={() => setColorTheme("light")}
             bgColor="bg-[#333333]"
           />
           <ThemeOption
             theme="muted"
             isSelected={colorTheme === "muted"}
-            onClick={() => handleApplyColor("muted")}
+            onClick={() => setColorTheme("muted")}
             bgColor="bg-[#2F4F4F]"
           />
         </div>
         <Button onClick={handleColorCoding}>
-          {isColorCodingEnabled ? "Disable Color Coding" : "Enable Color Coding"}
+          {colorCodingEnabled ? "Disable Color Coding" : "Enable Color Coding"}
         </Button>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { HexColorPicker } from "react-colorful";
+import React from "react";
 
 interface ColorPickerProps {
   value?: string;

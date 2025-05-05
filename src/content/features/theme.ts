@@ -1,34 +1,21 @@
 import browser from "webextension-polyfill";
+import { getTextColorByHex, getBackgroundColor } from "@/utils/utils";
 // Changing text and background color
-browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "applyColors") {
-    // const { textColor, backgroundColor } = request.colors;
-    const textColor = request.textColor || ""; // Default text color
-    const backgroundColor = request.backgroundColor || ""; // Default background color
-    applyColorsToDOM(textColor, backgroundColor);
-  } else if (request.action === "applyStoredColors") {
-    browser.storage.local
-      .get(["textColor", "backgroundColor"])
-      .then((result) => {
-        const storedTextColor = result.textColor || "";
-        const storedBackgroundColor = result.backgroundColor || "";
-        applyColorsToDOM(storedTextColor, storedBackgroundColor);
-      })
-      .catch((err) => {
-        console.error("Failed to get stored colors:", err);
-      });
-  } else if (request.action === "toggleColorCoding") {
-    const enable = request.enable;
-    toggleColorCoding(enable);
-  } else if (request.action === "getProcessedText") {
-    // Trả về văn bản đã được xử lý
-    const processedText = Array.from(originalTextNodes.values()).join(" ");
-    sendResponse({ processedText });
-    return true; // Để giữ kết nối mở cho phản hồi bất đồng bộ
-  } else if (request.action === "setColorCoding") {
-    toggleColorCoding(request.enabled);
+browser.runtime.onMessage.addListener(
+  (
+    request: { action: string; textColor: string; backgroundColor: string; enable: boolean; enabled: boolean },
+    sendResponse
+  ) => {
+    if (request.action === "applyColors") {
+      // const { textColor, backgroundColor } = request.colors;
+      const textColor = request.textColor || ""; // Default text color
+      const backgroundColor = request.backgroundColor || ""; // Default background color
+      applyColorsToDOM(textColor, backgroundColor);
+    } else if (request.action === "setColorCoding") {
+      toggleColorCoding(request.enabled);
+    }
   }
-});
+);
 
 const applyColorsToDOM = (textColor: string, backgroundColor: string) => {
   const textElements = document.querySelectorAll("p, span, h1, h2, h3, h4, h5, h6, li, a");
@@ -41,23 +28,6 @@ const applyColorsToDOM = (textColor: string, backgroundColor: string) => {
     }
   });
 };
-
-// Apply stored colors when content script is loaded
-browser.runtime.sendMessage({ action: "getStoredColors" });
-
-browser.storage.local
-  .get(["textColor", "backgroundColor", "colorCodingEnabled"])
-  .then((result) => {
-    const storedTextColor = result.textColor || "";
-    const storedBackgroundColor = result.backgroundColor || "";
-    applyColorsToDOM(storedTextColor, storedBackgroundColor);
-    if (result.colorCodingEnabled) {
-      toggleColorCoding(true);
-    }
-  })
-  .catch((err) => {
-    console.error("Error retrieving stored settings:", err);
-  });
 
 // Color coding for dyslexia
 
@@ -347,13 +317,9 @@ function traverseAndProcess(node: Node, enable: boolean) {
 // Hàm chính để bật/tắt mã màu
 function toggleColorCoding(enable: boolean) {
   if (enable) {
-    console.log("Bật mã màu âm tiết");
-    browser.storage.local.set({ colorCodingEnabled: true });
     // Duyệt toàn bộ body để tìm text node và tô màu
     traverseAndProcess(document.body, true);
   } else {
-    console.log("Tắt mã màu âm tiết");
-    browser.storage.local.set({ colorCodingEnabled: false });
     // Khi tắt, duyệt lại toàn bộ body để tìm các span đã tạo và khôi phục
     // Cách khôi phục bằng cách duyệt lại và gọi restoreTextNode trên ELEMENT_NODE parent
     traverseAndProcess(document.body, false);
@@ -393,3 +359,59 @@ function toggleColorCoding(enable: boolean) {
 // Có thể thêm MutationObserver để xử lý nội dung được tải động sau khi trang tải xong
 // Tuy nhiên, việc này làm phức tạp code hơn nhiều và cần xử lý cẩn thận để tránh vòng lặp vô hạn
 // hoặc hiệu suất kém trên các trang web phức tạp.
+
+export async function applyThemeToTab(tabId: number, enabled: boolean, theme?: string) {
+  const storage = await browser.storage.local.get(["theme", "textColor", "backgroundColor", "colorCodingEnabled"]);
+  const colorCodingEnabled = storage.colorCodingEnabled;
+
+  const currentTheme = theme || storage.theme;
+  const textColor = getTextColorByHex(currentTheme as string);
+  const backgroundColor = getBackgroundColor(currentTheme as string);
+
+  if (!enabled || currentTheme === "default") {
+    await browser.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        document.body.style.backgroundColor = "";
+        document.body.style.color = "";
+        document.querySelectorAll("*").forEach((el) => {
+          if (el instanceof HTMLElement && !el.classList.contains("dyslexia-color-syllable")) {
+            el.style.backgroundColor = "";
+            el.style.color = "";
+          }
+        });
+      },
+    });
+  } else {
+    await browser.tabs.sendMessage(tabId, {
+      action: "applyColors",
+      textColor,
+      backgroundColor,
+    });
+
+    // Nếu đang bật color coding, gửi lại sau applyColors để đảm bảo màu syllable giữ nguyên
+    if (colorCodingEnabled && enabled) {
+      await browser.tabs.sendMessage(tabId, {
+        action: "setColorCoding",
+        enabled: true,
+      });
+    }
+  }
+
+  // Lưu nếu có theme mới
+  if (theme) {
+    await browser.storage.local.set({
+      textColor,
+      backgroundColor,
+      theme,
+    });
+  }
+}
+
+
+export async function applyColorCodingToTab(tabId: number, enabled: boolean) {
+  await browser.tabs.sendMessage(tabId, {
+    action: "setColorCoding",
+    enabled,
+  });
+}

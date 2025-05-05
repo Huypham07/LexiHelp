@@ -29,98 +29,14 @@ const TextTab: React.FC<TextTabProps> = ({
   fontFamily,
   setFontFamily,
 }) => {
-  const handleFontFamilyChange = (value: string) => {
-    setFontFamily(value);
-    browser.storage.local.set({ fontFamily: value });
-
-    browser.tabs.query({}).then((tabs) => {
-      tabs.forEach((tab) => {
-        if (tab.id !== undefined) {
-          browser.tabs.sendMessage(tab.id, {
-            type: "UPDATE_FONT_FAMILY",
-            fontFamily: value,
-          });
-        }
-      });
-    });
-  };
-
-  const handleFontSizeChange = (value: number[]) => {
-    const newSize = value[0];
-    setFontSize(newSize);
-    browser.storage.local.set({ fontSize: newSize });
-
-    browser.tabs.query({}).then((tabs) => {
-      tabs.forEach((tab) => {
-        if (tab.id) {
-          browser.tabs.sendMessage(tab.id, {
-            type: "UPDATE_FONT_SIZE",
-            fontSize: newSize,
-          });
-        }
-      });
-    });
-  };
-
-  const handleLetterSpacingChange = (value: number[]) => {
-    const newSpacing = value[0];
-    setLetterSpacing(newSpacing);
-    browser.storage.local.set({ letterSpacing: newSpacing });
-
-    browser.tabs.query({}).then((tabs) => {
-      tabs.forEach((tab) => {
-        if (tab.id) {
-          browser.tabs.sendMessage(tab.id, {
-            type: "UPDATE_LETTER_SPACING",
-            letterSpacing: newSpacing,
-          });
-        }
-      });
-    });
-  };
-
-  const handleLineHeightChange = (value: number[]) => {
-    const newHeight = value[0];
-    setLineHeight(newHeight);
-    browser.storage.local.set({ lineHeight: newHeight });
-
-    browser.tabs.query({}).then((tabs) => {
-      tabs.forEach((tab) => {
-        if (tab.id) {
-          browser.tabs.sendMessage(tab.id, {
-            type: "UPDATE_LINE_HEIGHT",
-            lineHeight: newHeight,
-          });
-        }
-      });
-    });
-  };
-
-  const handleWordSpacingChange = (value: number[]) => {
-    const newSpacing = value[0];
-    setWordSpacing(newSpacing);
-    browser.storage.local.set({ wordSpacing: newSpacing });
-
-    browser.tabs.query({}).then((tabs) => {
-      tabs.forEach((tab) => {
-        if (tab.id) {
-          browser.tabs.sendMessage(tab.id, {
-            type: "UPDATE_WORD_SPACING",
-            wordSpacing: newSpacing,
-          });
-        }
-      });
-    });
-  };
-
   return (
     <div className="space-y-5">
       <div className="space-y-3">
         <div className="form-row">
           <Label htmlFor="font-family" className="text-gray-600">
-            Phông chữ
+            Font
           </Label>
-          <Select value={fontFamily} onValueChange={handleFontFamilyChange}>
+          <Select value={fontFamily} onValueChange={setFontFamily}>
             <SelectTrigger
               id="font-family"
               className="min-w-40"
@@ -142,7 +58,7 @@ const TextTab: React.FC<TextTabProps> = ({
                     ? "'Century Gothic', sans-serif"
                     : "sans-serif",
               }}>
-              <SelectValue placeholder="Chọn phông chữ" />
+              <SelectValue placeholder="Select font" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="openDyslexic" style={{ fontFamily: "'OpenDyslexic', sans-serif" }}>
@@ -174,7 +90,7 @@ const TextTab: React.FC<TextTabProps> = ({
       <div className="space-y-3">
         <div className="form-row">
           <Label htmlFor="font-size" className="text-gray-600">
-            Kích thước chữ: {fontSize}px
+            Font Size: {fontSize}px
           </Label>
         </div>
         <Slider
@@ -183,14 +99,14 @@ const TextTab: React.FC<TextTabProps> = ({
           max={32}
           step={1}
           value={[fontSize]}
-          onValueChange={handleFontSizeChange} // Đảm bảo sử dụng hàm này
+          onValueChange={(value) => setFontSize(value[0])}
         />
       </div>
 
       <div className="space-y-3">
         <div className="form-row">
           <Label htmlFor="letter-spacing" className="text-gray-600">
-            Khoảng cách chữ: {letterSpacing.toFixed(1)}
+            Letter Spacing: {letterSpacing.toFixed(1)}
           </Label>
         </div>
         <Slider
@@ -199,14 +115,14 @@ const TextTab: React.FC<TextTabProps> = ({
           max={10}
           step={0.1}
           value={[letterSpacing]}
-          onValueChange={handleLetterSpacingChange}
+          onValueChange={(value) => setLetterSpacing(value[0])}
         />
       </div>
 
       <div className="space-y-3">
         <div className="form-row">
           <Label htmlFor="line-height" className="text-gray-600">
-            Chiều cao dòng: {lineHeight.toFixed(1)}
+            Line Height: {lineHeight.toFixed(1)}
           </Label>
         </div>
         <Slider
@@ -215,14 +131,14 @@ const TextTab: React.FC<TextTabProps> = ({
           max={10}
           step={0.1}
           value={[lineHeight]}
-          onValueChange={handleLineHeightChange}
+          onValueChange={(value) => setLineHeight(value[0])}
         />
       </div>
 
       <div className="space-y-3">
         <div className="form-row">
           <Label htmlFor="word-spacing" className="text-gray-600">
-            Khoảng cách từ: {wordSpacing.toFixed(1)}
+            Word Spacing: {wordSpacing.toFixed(1)}
           </Label>
         </div>
         <Slider
@@ -231,7 +147,7 @@ const TextTab: React.FC<TextTabProps> = ({
           max={10}
           step={0.1}
           value={[wordSpacing]}
-          onValueChange={handleWordSpacingChange}
+          onValueChange={(value) => setWordSpacing(value[0])}
         />
       </div>
     </div>

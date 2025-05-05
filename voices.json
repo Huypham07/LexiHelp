@@ -1,0 +1,146 @@
+[
+  {
+    "ShortName": "zh-HK-HiuMaanNeural",
+    "Gender": "Female",
+    "Locale": "zh-HK",
+    "FriendlyName": "Microsoft HiuMaan Online (Natural) - Chinese (Hong Kong SAR)"
+  },
+  {
+    "ShortName": "zh-HK-WanLungNeural",
+    "Gender": "Male",
+    "Locale": "zh-HK",
+    "FriendlyName": "Microsoft WanLung Online (Natural) - Chinese (Hong Kong SAR)"
+  },
+  {
+    "ShortName": "zh-CN-XiaoxiaoNeural",
+    "Gender": "Female",
+    "Locale": "zh-CN",
+    "FriendlyName": "Microsoft Xiaoxiao Online (Natural) - Chinese (Mainland)"
+  },
+  {
+    "ShortName": "zh-CN-YunjianNeural",
+    "Gender": "Male",
+    "Locale": "zh-CN",
+    "FriendlyName": "Microsoft Yunjian Online (Natural) - Chinese (Mainland)"
+  },
+  {
+    "ShortName": "en-US-AvaMultilingualNeural",
+    "Gender": "Female",
+    "Locale": "en-US",
+    "FriendlyName": "Microsoft AvaMultilingual Online (Natural) - English (United States)"
+  },
+  {
+    "ShortName": "en-US-ChristopherNeural",
+    "Gender": "Male",
+    "Locale": "en-US",
+    "FriendlyName": "Microsoft Christopher Online (Natural) - English (United States)"
+  },
+  {
+    "ShortName": "fr-FR-DeniseNeural",
+    "Gender": "Female",
+    "Locale": "fr-FR",
+    "FriendlyName": "Microsoft Denise Online (Natural) - French (France)"
+  },
+  {
+    "ShortName": "fr-FR-HenriNeural",
+    "Gender": "Male",
+    "Locale": "fr-FR",
+    "FriendlyName": "Microsoft Henri Online (Natural) - French (France)"
+  },
+  {
+    "ShortName": "hi-IN-MadhurNeural",
+    "Gender": "Male",
+    "Locale": "hi-IN",
+    "FriendlyName": "Microsoft Madhur Online (Natural) - Hindi (India)"
+  },
+  {
+    "ShortName": "hi-IN-SwaraNeural",
+    "Gender": "Female",
+    "Locale": "hi-IN",
+    "FriendlyName": "Microsoft Swara Online (Natural) - Hindi (India)"
+  },
+  {
+    "ShortName": "id-ID-ArdiNeural",
+    "Gender": "Male",
+    "Locale": "id-ID",
+    "FriendlyName": "Microsoft Ardi Online (Natural) - Indonesian (Indonesia)"
+  },
+  {
+    "ShortName": "id-ID-GadisNeural",
+    "Gender": "Female",
+    "Locale": "id-ID",
+    "FriendlyName": "Microsoft Gadis Online (Natural) - Indonesian (Indonesia)"
+  },
+  {
+    "ShortName": "it-IT-GiuseppeMultilingualNeural",
+    "Gender": "Male",
+    "Locale": "it-IT",
+    "FriendlyName": "Microsoft GiuseppeMultilingual Online (Natural) - Italian (Italy)"
+  },
+  {
+    "ShortName": "it-IT-ElsaNeural",
+    "Gender": "Female",
+    "Locale": "it-IT",
+    "FriendlyName": "Microsoft Elsa Online (Natural) - Italian (Italy)"
+  },
+  {
+    "ShortName": "ja-JP-KeitaNeural",
+    "Gender": "Male",
+    "Locale": "ja-JP",
+    "FriendlyName": "Microsoft Keita Online (Natural) - Japanese (Japan)"
+  },
+  {
+    "ShortName": "ja-JP-NanamiNeural",
+    "Gender": "Female",
+    "Locale": "ja-JP",
+    "FriendlyName": "Microsoft Nanami Online (Natural) - Japanese (Japan)"
+  },
+  {
+    "ShortName": "ko-KR-HyunsuMultilingualNeural",
+    "Gender": "Female",
+    "Locale": "ko-KR",
+    "FriendlyName": "Microsoft HyunsuMultilingual Online (Natural) - Korean (Korea)"
+  },
+  {
+    "ShortName": "ko-KR-InJoonNeural",
+    "Gender": "Male",
+    "Locale": "ko-KR",
+    "FriendlyName": "Microsoft InJoon Online (Natural) - Korean (Korea)"
+  },
+  {
+    "ShortName": "lo-LA-ChanthavongNeural",
+    "Gender": "Male",
+    "Locale": "lo-LA",
+    "FriendlyName": "Microsoft Chanthavong Online (Natural) - Lao (Laos)"
+  },
+  {
+    "ShortName": "lo-LA-KeomanyNeural",
+    "Gender": "Female",
+    "Locale": "lo-LA",
+    "FriendlyName": "Microsoft Keomany Online (Natural) - Lao (Laos)"
+  },
+  {
+    "ShortName": "th-TH-NiwatNeural",
+    "Gender": "Male",
+    "Locale": "th-TH",
+    "FriendlyName": "Microsoft Niwat Online (Natural) - Thai (Thailand)"
+  },
+  {
+    "ShortName": "th-TH-PremwadeeNeural",
+    "Gender": "Female",
+    "Locale": "th-TH",
+    "FriendlyName": "Microsoft Premwadee Online (Natural) - Thai (Thailand)"
+  },
+  {
+    "ShortName": "vi-VN-HoaiMyNeural",
+    "Gender": "Female",
+    "Locale": "vi-VN",
+    "FriendlyName": "Microsoft HoaiMy Online (Natural) - Vietnamese (Vietnam)"
+  },
+  {
+    "ShortName": "vi-VN-NamMinhNeural",
+    "Gender": "Male",
+    "Locale": "vi-VN",
+    "FriendlyName": "Microsoft NamMinh Online (Natural) - Vietnamese (Vietnam)"
+  }
+]

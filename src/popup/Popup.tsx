@@ -1,125 +1,266 @@
-import { useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import TabsSection from "@/components/TabsSection";
-import Preview from "@/components/Preview";
+import React from "react";
+import Preview, { PreviewRefs } from "@/components/Preview";
 import browser from "webextension-polyfill";
+import { RulerMessage, ToggleMessage, sendToggleMessage } from "@/background/background";
+import { applyColorCodingToTab, applyThemeToTab } from "@/content/features/theme";
 
 const Popup: React.FC = () => {
   const [fontSize, setFontSize] = useState(18);
   const [letterSpacing, setLetterSpacing] = useState(1);
   const [lineHeight, setLineHeight] = useState(1.5);
   const [wordSpacing, setWordSpacing] = useState(1);
-  const [ttsHighlight, setTtsHighlight] = useState(false);
   const [ruler, setRuler] = useState(false);
-  const [rulerHeight, setRulerHeight] = useState(20);
-  const [rulerOpacity, setRulerOpacity] = useState(100);
+  const [rulerHeight, setRulerHeight] = useState(25);
+  const [rulerOpacity, setRulerOpacity] = useState(50);
   const [rulerColor, setRulerColor] = useState("#d9d9d9");
-  const [extensionEnabled, setExtensionEnabled] = useState(true);
+  const [extensionEnabled, setExtensionEnabled] = useState(false);
   const [colorTheme, setColorTheme] = useState("cream");
+  const [colorCodingEnabled, setColorCodingEnabled] = useState(false);
   const [fontFamily, setFontFamily] = useState("openDyslexic");
+  const [voice, setVoice] = useState<string>("male");
+  const [rate, setRate] = useState<number>(1.0);
+  const [pitch, setPitch] = useState<number>(0);
+  const [volume, setVolume] = useState<number>(50);
+  // others tools states
+  const [fullscreenStyles, setFullscreenStyles] = useState<boolean>(false);
+  const [removeDistractions, setRemoveDistractions] = useState<boolean>(false);
 
-  // Load text styles & enable state from sync storage
+  const previewRef = useRef<PreviewRefs>(null);
+
+  const handleReadPreviewText = async () => {
+    await previewRef?.current.onReadPreviewText();
+  };
+
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
-    (async () => {
-      const { fontSize, letterSpacing, lineHeight, wordSpacing, fontFamily, extensionEnabled } =
-        await browser.storage.local.get([
-          "fontSize",
-          "letterSpacing",
-          "lineHeight",
-          "wordSpacing",
-          "fontFamily",
-          "extensionEnabled",
-        ]);
+    // Load saved settings from storage
+    const settingsKeys = [
+      "extensionEnabled",
+      "fontSize",
+      "letterSpacing",
+      "lineHeight",
+      "wordSpacing",
+      "fontFamily",
+      "ruler",
+      "rulerHeight",
+      "rulerOpacity",
+      "rulerColor",
+      "theme",
+      "colorCodingEnabled",
+      "voice",
+      "speed",
+      "pitch",
+      "volume",
+      "fullscreenStyles",
+      "removeDistractions",
+    ];
 
-      if (fontSize !== undefined) setFontSize(fontSize as number);
-      if (letterSpacing !== undefined) setLetterSpacing(letterSpacing as number);
-      if (lineHeight !== undefined) setLineHeight(lineHeight as number);
-      if (wordSpacing !== undefined) setWordSpacing(wordSpacing as number);
-      if (fontFamily !== undefined) setFontFamily(fontFamily as string);
-      if (extensionEnabled !== undefined) setExtensionEnabled(extensionEnabled as boolean);
+    browser.storage.local.get(settingsKeys).then((result) => {
+      const settings = {
+        extensionEnabled: Boolean(result.extensionEnabled),
+        fontSize: result.fontSize,
+        letterSpacing: result.letterSpacing,
+        lineHeight: result.lineHeight,
+        wordSpacing: result.wordSpacing,
+        fontFamily: result.fontFamily,
+        ruler: result.ruler,
+        rulerHeight: result.rulerHeight,
+        rulerOpacity: result.rulerOpacity,
+        rulerColor: result.rulerColor,
+        colorTheme: result.theme,
+        colorCodingEnabled: result.colorCodingEnabled,
+        voice: result.voice,
+        speed: result.speed,
+        pitch: result.pitch,
+        volume: result.volume,
+        fullscreenStyles: result.fullscreenStyles,
+        removeDistractions: result.removeDistractions,
+      };
 
-      // Auto apply styles to all tabs
-      const tabs = await browser.tabs.query({});
-      for (const tab of tabs) {
-        if (tab.id !== undefined) {
-          await browser.tabs.sendMessage(tab.id, {
-            type: "UPDATE_ALL_STYLES",
-            fontSize,
-            letterSpacing,
-            lineHeight,
-            wordSpacing,
-            fontFamily,
-          });
+      // Cập nhật các state tương ứng
+      Object.entries(settings).forEach(([key, value]) => {
+        if (value !== undefined) {
+          switch (key) {
+            case "extensionEnabled":
+              setExtensionEnabled(value as boolean);
+              break;
+            case "fontSize":
+              setFontSize(value as number);
+              break;
+            case "letterSpacing":
+              setLetterSpacing(value as number);
+              break;
+            case "lineHeight":
+              setLineHeight(value as number);
+              break;
+            case "wordSpacing":
+              setWordSpacing(value as number);
+              break;
+            case "fontFamily":
+              setFontFamily(value as string);
+              break;
+            case "ruler":
+              setRuler(value as boolean);
+              break;
+            case "rulerHeight":
+              setRulerHeight(value as number);
+              break;
+            case "rulerOpacity":
+              setRulerOpacity(value as number);
+              break;
+            case "rulerColor":
+              setRulerColor(value as string);
+              break;
+            case "colorTheme":
+              setColorTheme(value as string);
+              break;
+            case "colorCodingEnabled":
+              setColorCodingEnabled(value as boolean);
+              break;
+            case "voice":
+              setVoice(value as string);
+              break;
+            case "speed":
+              setRate(value as number);
+              break;
+            case "pitch":
+              setPitch(value as number);
+              break;
+            case "volume":
+              setVolume(value as number);
+              break;
+            case "fullscreenStyles":
+              setFullscreenStyles(value as boolean);
+              break;
+            case "removeDistractions":
+              setRemoveDistractions(value as boolean);
+              break;
+            default:
+              break;
+          }
         }
-      }
-    })();
+      });
+
+      setIsLoaded(true);
+    });
   }, []);
 
-  // Save extension enabled toggle and send message
+  // toggle extension on/off
   useEffect(() => {
-    (async () => {
-      await browser.storage.local.set({ extensionEnabled });
+    browser.storage.local.set({ extensionEnabled: extensionEnabled });
+    if (isLoaded) {
+      browser.runtime.sendMessage({
+        action: "toggleExtension",
+        enabled: extensionEnabled,
+      });
+    }
+  }, [extensionEnabled, isLoaded]);
 
-      const tabs = await browser.tabs.query({});
-      for (const tab of tabs) {
-        if (tab.id !== undefined) {
-          await browser.tabs.sendMessage(tab.id, {
-            type: extensionEnabled ? "ENABLE_EXTENSION" : "DISABLE_EXTENSION",
+  // text style settings
+  useEffect(() => {
+    if (isLoaded) {
+      const settings = {
+        fontFamily,
+        fontSize,
+        letterSpacing,
+        lineHeight,
+        wordSpacing,
+      };
+
+      browser.storage.local.set(settings);
+      browser.tabs.query({}).then((tabs) => {
+        tabs.forEach((tab) => {
+          if (tab.id) {
+            browser.tabs.sendMessage(tab.id, settings);
+          }
+        });
+      });
+    }
+  }, [fontFamily, fontSize, letterSpacing, lineHeight, wordSpacing, isLoaded]);
+
+  // theme settings
+  useEffect(() => {
+    if (isLoaded) {
+      browser.storage.local.set({ colorCodingEnabled: colorCodingEnabled });
+      browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+        const tabId = tabs[0]?.id;
+        if (tabId) {
+          applyThemeToTab(tabId, true, colorTheme).then(() => {
+            applyColorCodingToTab(tabId, colorCodingEnabled);
           });
         }
-      }
-    })();
-  }, [extensionEnabled]);
-
-  // Load settings from storage when component mounts
-  // Load ruler config from local storage
-  useEffect(() => {
-    (async () => {
-      const {
-        ruler = true,
-        rulerHeight = 20,
-        rulerOpacity = 30,
-        rulerColor = "#d9d9d9",
-      } = await browser.storage.local.get(["ruler", "rulerHeight", "rulerOpacity", "rulerColor"]);
-
-      setRuler(ruler as boolean);
-      setRulerHeight(rulerHeight as number);
-      setRulerOpacity(rulerOpacity as number);
-      setRulerColor(rulerColor as string);
-    })();
-  }, []);
+      });
+    }
+  }, [colorTheme, isLoaded, colorCodingEnabled]);
 
   // Save ruler config + send to content script
   useEffect(() => {
-    (async () => {
-      const config = {
-        ruler,
-        height: rulerHeight,
-        opacity: rulerOpacity,
-        color: rulerColor,
+    if (isLoaded) {
+      (async () => {
+        const config = {
+          ruler,
+          rulerHeight,
+          rulerOpacity,
+          rulerColor,
+        };
+
+        await browser.storage.local.set(config);
+
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        const tab = tabs[0];
+        if (tab?.id !== undefined) {
+          const message: RulerMessage = {
+            action: "updateRuler",
+            config,
+          };
+          await browser.tabs.sendMessage(tab.id, message);
+        }
+      })();
+    }
+  }, [ruler, rulerHeight, rulerOpacity, rulerColor, isLoaded]);
+
+  // Text to speech settings
+  useEffect(() => {
+    if (isLoaded) {
+      const ttsSettings = {
+        voice,
+        rate,
+        pitch,
+        volume,
       };
+      browser.storage.local.set(ttsSettings);
+    }
+  }, [voice, rate, pitch, volume, isLoaded]);
 
-      await browser.storage.local.set(config);
-
-      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-      const tab = tabs[0];
-      if (tab?.id !== undefined) {
-        await browser.tabs.sendMessage(tab.id, {
-          type: "UPDATE_RULER",
-          config,
-        });
-      }
-    })();
-  }, [ruler, rulerHeight, rulerOpacity, rulerColor]);
+  // remove distractions settings
+  useEffect(() => {
+    if (isLoaded) {
+      browser.storage.local.set({ removeDistractions });
+      browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+        const tab = tabs[0];
+        if (tab?.id) {
+          const message: ToggleMessage = {
+            action: "setRemoveDistractions",
+            enabled: removeDistractions,
+          };
+          sendToggleMessage(tab.id, message);
+        }
+      });
+    }
+  }, [removeDistractions, isLoaded]);
 
   return (
     <div className="popup-container">
       <Card className="card w-[400px] max-h-[600px] border shadow-md p-0 rounded-none gap-0">
         <Header extensionEnabled={extensionEnabled} setExtensionEnabled={setExtensionEnabled} />
-        <CardContent className="card-content flex-1 overflow-y-auto space-y-6 pt-6 pb-3">
+        <CardContent className="card-content flex-1 overflow-y-auto space-y-6 pt-6 pb-6">
           <TabsSection
+            extensionEnabled={extensionEnabled}
             fontSize={fontSize}
             setFontSize={setFontSize}
             letterSpacing={letterSpacing}
@@ -130,8 +271,6 @@ const Popup: React.FC = () => {
             setWordSpacing={setWordSpacing}
             fontFamily={fontFamily}
             setFontFamily={setFontFamily}
-            ttsHighlight={ttsHighlight}
-            setTtsHighlight={setTtsHighlight}
             ruler={ruler}
             setRuler={setRuler}
             rulerHeight={rulerHeight}
@@ -142,6 +281,21 @@ const Popup: React.FC = () => {
             setRulerColor={setRulerColor}
             colorTheme={colorTheme}
             setColorTheme={setColorTheme}
+            colorCodingEnabled={colorCodingEnabled}
+            setColorCodingEnabled={setColorCodingEnabled}
+            voice={voice}
+            setVoice={setVoice}
+            rate={rate}
+            setRate={setRate}
+            pitch={pitch}
+            setPitch={setPitch}
+            volume={volume}
+            setVolume={setVolume}
+            fullscreenStyles={fullscreenStyles}
+            setFullscreenStyles={setFullscreenStyles}
+            removeDistractions={removeDistractions}
+            setRemoveDistractions={setRemoveDistractions}
+            onReadPreviewText={handleReadPreviewText}
           />
           <Preview
             fontSize={fontSize}
@@ -149,12 +303,15 @@ const Popup: React.FC = () => {
             lineHeight={lineHeight}
             wordSpacing={wordSpacing}
             fontFamily={fontFamily}
-            ttsHighlight={ttsHighlight}
             ruler={ruler}
+            rulerHeight={rulerHeight}
+            rulerOpacity={rulerOpacity}
+            rulerColor={rulerColor}
             colorTheme={colorTheme}
+            colorCodingEnabled={colorCodingEnabled}
+            ref={previewRef}
           />
         </CardContent>
-        <Footer />
       </Card>
     </div>
   );
