@@ -1,5 +1,11 @@
 export function getBackgroundColor(colorTheme: string): string {
   switch (colorTheme) {
+    case "high contrast":
+      return "#FFFFFF";
+    case "soft contrast":
+      return "#FFF8DC";
+    case "warm and calm":
+      return "#FFFFE0";
     case "green":
       return "#E8F5E9";
     case "neutral":
@@ -10,10 +16,10 @@ export function getBackgroundColor(colorTheme: string): string {
       return "#F5F5DC";
     case "pastel":
       return "#E6E6FA";
-    case "hightlight":
+    case "highlight":
       return "#003366";
     case "dark":
-      return "#000000";
+      return "#1E1E1E";
     case "light":
       return "#333333";
     case "muted":
@@ -46,7 +52,7 @@ export function getTextColorByHex (colorTheme: string) : string {
             return "#003366";
         case "vibrant":
             return "#000";
-        case "hightlight":
+        case "highlight":
             return "#FFFFFF";
         case "pastel":
             return "#4B0082";
@@ -55,35 +61,4 @@ export function getTextColorByHex (colorTheme: string) : string {
         default:
             return "#000"; // Default color for custom or other themes
     }
-}
-
-export function getTextColorByTailwind(colorTheme: string): string {
-  switch (colorTheme) {
-    case "high contrast":
-      return "text-black"; // Tailwind class for black text
-    case "soft contrast":
-      return "text-amber-800"; // Tailwind class for a soft brown color
-    case "warm and calm":
-      return "text-blue-900"; // Tailwind class for a deep blue color
-    case "dark":
-      return "text-white"; // Tailwind class for white text
-    case "light":
-      return "text-yellow-400"; // Tailwind class for yellow text
-    case "muted":
-      return "text-green-300"; // Tailwind class for a muted green color
-    case "neutral":
-      return "text-gray-700"; // Tailwind class for a neutral gray color
-    case "subtle and relaxed":
-      return "text-blue-900"; // Tailwind class for a deep blue color
-    case "vibrant":
-      return "text-black"; // Tailwind class for black text
-    case "hightlight":
-      return "text-white"; // Tailwind class for white text
-    case "pastel":
-      return "text-indigo-700"; // Tailwind class for a pastel indigo color
-    case "default":
-      return "";
-    default:
-      return "text-black"; // Default Tailwind class for black text
-  }
 }

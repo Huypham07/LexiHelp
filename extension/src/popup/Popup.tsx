@@ -5,7 +5,7 @@ import TabsSection from "@/components/TabsSection";
 import React from "react";
 import Preview, { PreviewRefs } from "@/components/Preview";
 import browser from "webextension-polyfill";
-import { RulerMessage, ToggleMessage, sendToggleMessage } from "@/background/background";
+import { RulerMessage, StyleMessage, ToggleMessage, sendToggleMessage } from "@/background/background";
 import { applyColorCodingToTab, applyThemeToTab } from "@/content/features/theme";
 
 const Popup: React.FC = () => {
@@ -159,100 +159,107 @@ const Popup: React.FC = () => {
         enabled: extensionEnabled,
       });
     }
-  }, [extensionEnabled, isLoaded]);
+  }, [extensionEnabled]);
 
   // text style settings
   useEffect(() => {
-    if (isLoaded) {
-      const settings = {
-        fontFamily,
-        fontSize,
-        letterSpacing,
-        lineHeight,
-        wordSpacing,
-      };
-
-      browser.storage.local.set(settings);
-      browser.tabs.query({}).then((tabs) => {
-        tabs.forEach((tab) => {
-          if (tab.id) {
-            browser.tabs.sendMessage(tab.id, settings);
-          }
-        });
+    const settings = {
+      fontFamily,
+      fontSize,
+      letterSpacing,
+      lineHeight,
+      wordSpacing,
+    };
+    browser.storage.local.set(settings);
+    if (isLoaded && extensionEnabled) {
+      browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+        const tabId = tabs[0]?.id;
+        if (tabId) {
+          const message: StyleMessage = {
+            enabled: extensionEnabled,
+            action: "setTextStyle",
+            ...settings,
+          };
+          browser.tabs.sendMessage(tabId, message);
+        }
       });
     }
-  }, [fontFamily, fontSize, letterSpacing, lineHeight, wordSpacing, isLoaded]);
+  }, [fontFamily, fontSize, letterSpacing, lineHeight, wordSpacing]);
 
   // theme settings
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && extensionEnabled) {
+      browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+        const tabId = tabs[0]?.id;
+        if (tabId) {
+          applyThemeToTab(tabId, true, colorTheme);
+        }
+      });
+    }
+  }, [colorTheme]);
+
+  useEffect(() => {
+    if (isLoaded && extensionEnabled) {
       browser.storage.local.set({ colorCodingEnabled: colorCodingEnabled });
       browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
         const tabId = tabs[0]?.id;
         if (tabId) {
-          applyThemeToTab(tabId, true, colorTheme).then(() => {
-            applyColorCodingToTab(tabId, colorCodingEnabled);
-          });
+          applyColorCodingToTab(tabId, colorCodingEnabled);
         }
       });
     }
-  }, [colorTheme, isLoaded, colorCodingEnabled]);
+  }, [colorCodingEnabled]);
 
   // Save ruler config + send to content script
   useEffect(() => {
-    if (isLoaded) {
-      (async () => {
-        const config = {
-          ruler,
-          rulerHeight,
-          rulerOpacity,
-          rulerColor,
-        };
-
-        await browser.storage.local.set(config);
-
-        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
-        const tab = tabs[0];
-        if (tab?.id !== undefined) {
+    const config = {
+      ruler,
+      rulerHeight,
+      rulerOpacity,
+      rulerColor,
+    };
+    browser.storage.local.set(config);
+    if (isLoaded && extensionEnabled) {
+      browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+        const tabId = tabs[0]?.id;
+        if (tabId) {
           const message: RulerMessage = {
             action: "updateRuler",
             config,
           };
-          await browser.tabs.sendMessage(tab.id, message);
+          browser.tabs.sendMessage(tabId, message);
         }
-      })();
+      });
     }
-  }, [ruler, rulerHeight, rulerOpacity, rulerColor, isLoaded]);
+  }, [ruler, rulerHeight, rulerOpacity, rulerColor]);
 
   // Text to speech settings
   useEffect(() => {
-    if (isLoaded) {
-      const ttsSettings = {
-        voice,
-        rate,
-        pitch,
-        volume,
-      };
-      browser.storage.local.set(ttsSettings);
-    }
-  }, [voice, rate, pitch, volume, isLoaded]);
+    const ttsSettings = {
+      voice,
+      rate,
+      pitch,
+      volume,
+    };
+    browser.storage.local.set(ttsSettings);
+  }, [voice, rate, pitch, volume]);
 
   // remove distractions settings
   useEffect(() => {
-    if (isLoaded) {
-      browser.storage.local.set({ removeDistractions });
+    browser.storage.local.set({ removeDistractions });
+    if (isLoaded && extensionEnabled) {
       browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-        const tab = tabs[0];
-        if (tab?.id) {
+        const tabId = tabs[0]?.id;
+        if (tabId) {
           const message: ToggleMessage = {
             action: "setRemoveDistractions",
             enabled: removeDistractions,
           };
-          sendToggleMessage(tab.id, message);
+          sendToggleMessage(tabId, message);
         }
       });
     }
-  }, [removeDistractions, isLoaded]);
+  }, [removeDistractions]);
 
   return (
     <div className="popup-container">

@@ -9,7 +9,7 @@ import {
 import { Readability } from "@mozilla/readability";
 import { franc } from "franc";
 import { languageVoiceMap } from "@/utils/languageVoiceMap";
-import { TextMessage, ToggleMessage } from "@/background/background";
+import { BaseMessage, TextMessage, ToggleMessage } from "@/background/background";
 
 let audioElement: any = null;
 let isPlaying = false;
@@ -239,7 +239,9 @@ browser.runtime.onMessage.addListener(async (message: TextMessage) => {
 });
 
 async function sendSummaryRequest(type: "quick-summary" | "smart-summary", text: string): Promise<string> {
-  const endpoint = `http://localhost:8000/api/summarize/${type === "quick-summary" ? "extract" : "abstract"}`;
+  const API_URL = process.env.API_URL || "http://localhost:8000";
+
+  const endpoint = `${API_URL}/api/summarize/${type === "quick-summary" ? "extract" : "abstract"}`;
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -270,7 +272,7 @@ function showSummarizingNotice() {
   notice.innerText = "⏳ Generating summary...";
   notice.style.cssText = `
     position:fixed;top:10px;right:10px;
-    background:#2196f3;color:#fff;padding:10px 15px;
+    background:#2196f3 !important;color:#fff !important;padding:10px 15px;
     border-radius:8px;z-index:9999;font-size:16px;
     box-shadow:0 2px 6px rgba(0,0,0,0.2);
   `;
@@ -281,28 +283,52 @@ function showSummarizingNotice() {
 async function showSummaryPopup(summary: string) {
   const styles = await getUserStyles();
 
+  const overlay = document.createElement("div");
+  overlay.style.cssText = `
+    position:fixed; top:0; left:0; width:100vw; height:100vh;
+    background:rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(8px);
+    z-index:9999;
+  `;
+
   const popup = document.createElement("div");
   popup.innerHTML = `<h3>📄 Summary:</h3><p>${summary}</p>`;
   popup.style.cssText = `
-      position:fixed; top:20%; left:50%; transform:translateX(-50%);
-      background:#fff; padding:20px; border:1px solid #ccc; border-radius:10px;
-      box-shadow:0 4px 8px rgba(0,0,0,0.2); max-width:400px; z-index:10000;
-      font-size:${styles.fontSize};
-      line-height:${styles.lineHeight};
-      font-family:${styles.fontFamily};
-      letter-spacing:${styles.letterSpacing};
-      word-spacing:${styles.wordSpacing};
-  `;
+  position:fixed; top:20%; left:50%; transform:translateX(-50%);
+  background:#fff;
+  padding:20px; border-radius:10px;
+  outline:16px solid white;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  font-size:${styles.fontSize};
+  line-height:${styles.lineHeight};
+  font-family:${styles.fontFamily};
+  letter-spacing:${styles.letterSpacing};
+  word-spacing:${styles.wordSpacing};
+  max-width:400px;
+  max-height:400px;
+  overflow-y:auto;
+  z-index:10000;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform:translateX(-50%) scale(0.95);
+`;
+requestAnimationFrame(() => {
+  popup.style.transform = "translateX(-50%) scale(1)";
+});
+
 
   const closeBtn = document.createElement("button");
   closeBtn.innerText = "Close";
   closeBtn.style.cssText = `
-      margin-top:10px; padding:5px 10px; background:#2196f3; color:white;
+      margin-top:10px; padding:5px 10px; background:#2196f3 !important; color:white !important;
       border:none; border-radius:5px; cursor:pointer;
   `;
-  closeBtn.onclick = () => popup.remove();
+  closeBtn.onclick = () => {
+    popup.remove();
+    overlay.remove();
+  }
 
   popup.appendChild(closeBtn);
+  document.body.appendChild(overlay);
   document.body.appendChild(popup);
 }
 
@@ -366,18 +392,28 @@ browser.runtime.onMessage.addListener((message: ToggleMessage) => {
     } else {
       disableReaderMode();
     }
+    setTimeout(() => {
+      const message: BaseMessage = {
+        action: "fetchAllFeaturesEnabled",
+      };
+      browser.runtime.sendMessage(message);
+    }, 300);
   }
 });
 
-let originalNodes: Node[] | null = null;
+function getOriginalDOM(): Document {
+  const html = window.__originalHTML;
+  return new DOMParser().parseFromString(html, "text/html");
+}
+
+function getOriginalNodes() {
+  return window.__originalNodes || null;
+}
 
 function enableReaderMode() {
   if (removeDistractions) return;
-
-  // Lưu lại DOM gốc
-  originalNodes = Array.from(document.body.childNodes);
-
-  const article = new Readability(document.cloneNode(true) as Document).parse();
+  const originalDOM = getOriginalDOM();
+  const article = new Readability(originalDOM).parse();
   if (!article) return;
 
   document.body.replaceChildren();
@@ -394,6 +430,7 @@ function enableReaderMode() {
 }
 
 function disableReaderMode() {
+  const originalNodes = getOriginalNodes();
   if (!removeDistractions || !originalNodes) return;
 
   document.body.replaceChildren(...originalNodes);
@@ -404,7 +441,6 @@ function injectReaderStyle() {
   const style = document.createElement("style");
   // can change styles here
   style.textContent = `
-    body { background: #f4f4f4; color: #222; line-height: 1.8; font-size: 18px; font-family: sans-serif; padding: 2rem; }
     img { max-width: 100%; height: auto; }
     a { color: #007bff; }
   `;

@@ -2,6 +2,7 @@ import { Label } from "./ui/label";
 import ThemeOption from "./ThemeOption";
 import React from "react";
 import { Button } from "./ui/button";
+import { getBackgroundColor } from "@/utils/utils";
 
 interface ColorsTabProps {
   colorTheme: string;
@@ -29,79 +30,79 @@ const ColorsTab: React.FC<ColorsTabProps> = ({ colorTheme, setColorTheme, colorC
             theme="default"
             isSelected={colorTheme === "default"}
             onClick={() => setColorTheme("default")}
-            bgColor="bg-[#FFFFFF]"
+            bgColor={getBackgroundColor("default")}
           />
           <ThemeOption
             theme="high contrast"
             isSelected={colorTheme === "high contrast"}
             onClick={() => setColorTheme("high contrast")}
-            bgColor="bg-[#FFFFFF]"
+            bgColor={getBackgroundColor("high contrast")}
           />
           <ThemeOption
             theme="soft contrast"
             isSelected={colorTheme === "soft contrast"}
             onClick={() => setColorTheme("soft contrast")}
-            bgColor="bg-[#FFF8DC]"
+            bgColor={getBackgroundColor("soft contrast")}
           />
           <ThemeOption
             theme="warm and calm"
             isSelected={colorTheme === "warm and calm"}
             onClick={() => setColorTheme("warm and calm")}
-            bgColor="bg-[#FFFFE0]"
+            bgColor={getBackgroundColor("warm and calm")}
           />
           <ThemeOption
             theme="green"
             isSelected={colorTheme === "green"}
             onClick={() => setColorTheme("green")}
-            bgColor="bg-[#E8F5E9]"
+            bgColor={getBackgroundColor("green")}
           />
           <ThemeOption
             theme="neutral"
             isSelected={colorTheme === "neutral"}
             onClick={() => setColorTheme("neutral")}
-            bgColor="bg-[#D3D3D3]"
+            bgColor={getBackgroundColor("neutral")}
           />
           <ThemeOption
             theme="vibrant"
             isSelected={colorTheme === "vibrant"}
             onClick={() => setColorTheme("vibrant")}
-            bgColor="bg-[#F4C2C2]"
+            bgColor={getBackgroundColor("vibrant")}
           />
           <ThemeOption
             theme="subtle and relaxed"
             isSelected={colorTheme === "subtle and relaxed"}
             onClick={() => setColorTheme("subtle and relaxed")}
-            bgColor="bg-[#F5F5DC]"
+            bgColor={getBackgroundColor("subtle and relaxed")}
           />
           <ThemeOption
             theme="pastel"
             isSelected={colorTheme === "pastel"}
             onClick={() => setColorTheme("pastel")}
-            bgColor="bg-[#E6E6FA]"
+            bgColor={getBackgroundColor("pastel")}
           />
           <ThemeOption
-            theme="hightlight"
-            isSelected={colorTheme === "hightlight"}
-            onClick={() => setColorTheme("hightlight")}
-            bgColor="bg-[#003366]"
+            theme="highlight"
+            isSelected={colorTheme === "highlight"}
+            onClick={() => setColorTheme("highlight")}
+            bgColor={getBackgroundColor("highlight")}
           />
           <ThemeOption
             theme="dark"
             isSelected={colorTheme === "dark"}
             onClick={() => setColorTheme("dark")}
-            bgColor="bg-[#000000]"
+            bgColor={getBackgroundColor("dark")}
           />
           <ThemeOption
             theme="light"
             isSelected={colorTheme === "light"}
             onClick={() => setColorTheme("light")}
-            bgColor="bg-[#333333]"
+            bgColor={getBackgroundColor("light")}
           />
           <ThemeOption
             theme="muted"
             isSelected={colorTheme === "muted"}
             onClick={() => setColorTheme("muted")}
-            bgColor="bg-[#2F4F4F]"
+            bgColor={getBackgroundColor("muted")}
           />
         </div>
         <Button onClick={handleColorCoding}>

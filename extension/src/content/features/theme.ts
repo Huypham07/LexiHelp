@@ -1,9 +1,11 @@
 import browser from "webextension-polyfill";
 import { getTextColorByHex, getBackgroundColor } from "@/utils/utils";
 // Changing text and background color
+
+let isColorCodingEnabled = false;
 browser.runtime.onMessage.addListener(
   (
-    request: { action: string; textColor: string; backgroundColor: string; enable: boolean; enabled: boolean },
+    request: { action: string; textColor: string; backgroundColor: string; colorCodingEnabled: boolean },
     sendResponse
   ) => {
     if (request.action === "applyColors") {
@@ -11,235 +13,173 @@ browser.runtime.onMessage.addListener(
       const textColor = request.textColor || ""; // Default text color
       const backgroundColor = request.backgroundColor || ""; // Default background color
       applyColorsToDOM(textColor, backgroundColor);
+
+      if (isColorCodingEnabled) {
+        // Tắt đi để xóa các span cũ
+        toggleColorCoding(false);
+        toggleColorCoding(true);
+        // Bật lại để tạo span mới với màu từ bộ màu color coding
+        // setTimeout(() => toggleColorCoding, 50);
+      }
     } else if (request.action === "setColorCoding") {
-      toggleColorCoding(request.enabled);
+      isColorCodingEnabled = request.colorCodingEnabled;
+      toggleColorCoding(request.colorCodingEnabled);
     }
   }
 );
 
 const applyColorsToDOM = (textColor: string, backgroundColor: string) => {
-  const textElements = document.querySelectorAll("p, span, h1, h2, h3, h4, h5, h6, li, a");
-  textElements.forEach((element: Element) => {
-    const htmlElement = element as HTMLElement;
-    // Kiểm tra nếu phần tử có nội dung văn bản
-    if (htmlElement.innerText.trim().length > 0) {
-      htmlElement.style.backgroundColor = backgroundColor; // Chỉ thay đổi màu nền
-      htmlElement.style.color = textColor; // Thay đổi màu chữs
+  // Add a fullscreen overlay to ensure the entire page gets the background color
+  let overlay = document.getElementById("theme-extension-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "theme-extension-overlay";
+    document.body.appendChild(overlay);
+  }
+  
+  // Style the overlay to cover the entire page
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100vw";
+  overlay.style.height = "100vh";
+  overlay.style.backgroundColor = backgroundColor;
+  overlay.style.zIndex = "-9999"; // Behind all content
+  overlay.style.pointerEvents = "none"; // Don't block interactions
+  
+  // Apply styles to the html and body elements
+  document.documentElement.style.setProperty("background-color", backgroundColor, "important");
+  document.body.style.setProperty("background-color", backgroundColor, "important");
+  document.body.style.setProperty("color", textColor, "important");
+  
+  // Apply a CSS class to the body for more control
+  const styleId = "theme-extension-styles";
+  let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+  
+  if (!styleElement) {
+    styleElement = document.createElement("style");
+    styleElement.id = styleId;
+    document.head.appendChild(styleElement);
+  }
+  
+  // Use CSS to override background colors more aggressively
+  styleElement.textContent = `
+    html, body {
+      background-color: ${backgroundColor} !important;
+      color: ${textColor} !important;
     }
-  });
+
+    /* Override common elements that might have their own background */
+    div, section, article, aside, nav, header, footer, main {
+      background-color: ${backgroundColor} !important;
+      color: ${textColor} !important;
+    }
+    
+    /* Ensure text elements get the proper color */
+    p, span, h1, h2, h3, h4, h5, h6, li, a, button, input, textarea, label, th, td {
+      background-color: ${backgroundColor} !important;
+      color: ${textColor} !important;
+    }
+  `;
 };
 
 // Color coding for dyslexia
-
-// Bộ màu gợi ý (có thể thay đổi)
-// Sử dụng các màu dịu, tương phản vừa phải
-const colorPalette: string[] = [
-  "#1f78b4", // Blue
-  "#ff7f00", // Orange
-  "#33a02c", // Green
-  "#e31a1c", // Red (dùng cẩn thận, tránh cạnh xanh lá)
+const colorPalette = [
+  "#A0C4FF", // Màu xanh dương nhạt
+  "#678CB1", // Màu xanh dương-xám,
+  "#FFB29B", // Màu cam nhạt
 ];
 
-const colorPalette1: string[] = [
-  "#FFEB3B", // Yellow
-  "#FF5722", // Deep Orange
-  "#2196F3", // Blue
-  "#9C27B0", // Purple
-];
-
-// Hợp với nền sáng, tệ với nền tối
-const colorPalette2: string[] = [
-  "#424242", // Dark Gray
-  "#5e35b1", // Dark Purple
-  "#d84315", // Orange Red
-  "#00897b", // Teal
-];
-
-const colorPalette5: string[] = [
-  "fffacd", // Lemon Chiffon
-  "4682b4", // Dark Slate Blue
-  "ffddee", // Lavender Blush
-  "d2b48c", // Tan
-];
-
-const colorPalette3 = [
-  "#4fc3f7", // blue
-  "#81c784", // green
-  "#ba68c8", // purple
-  "#fff176", // yellow
-  "#e57373", // red
-  "#ffB74d", // orange
-  "#f48fb1", // pink
-];
-
-// Hợp nền tối
-const colorPalette4 = [
-  // "#2979ff", // hot blue
-  // "#f57c00", // orange
-  // "#388e3C", // green
-  // "#c2185b", // pinkXanh dương đậm: #005566
-  "#F28C38", // Cam
-  "#AB47BC", // Tím
-  "#66BB6A", // Xanh lá
-  "#455A64", // Xám đen
-];
-
+function splitIntoPseudoSyllables(word: string): string[] {
+  if (!word || word.length <= 2) return [word]; // Don't split very short words
+  
+  const syllables: string[] = [];
+  const vowels = "aeiouyAEIOUY";
+  let currentSyllable = "";
+  let hasVowel = false;
+  
+  for (let i = 0; i < word.length; i++) {
+    const char = word[i];
+    currentSyllable += char;
+    
+    if (vowels.includes(char)) {
+      hasVowel = true;
+    }
+    
+    // Simple syllable division rules:
+    // 1. After having at least one vowel
+    // 2. When we have a consonant followed by a vowel (CV pattern)
+    // 3. Or when syllable reaches optimal length (2-3 characters)
+    if (hasVowel && i < word.length - 1) {
+      const nextChar = word[i + 1];
+      
+      if (
+        (!vowels.includes(char) && vowels.includes(nextChar)) || // Consonant-Vowel boundary
+        (currentSyllable.length >= 3) // Optimal syllable length
+      ) {
+        syllables.push(currentSyllable);
+        currentSyllable = "";
+        hasVowel = false;
+      }
+    }
+  }
+  
+  // Add any remaining characters as final syllable
+  if (currentSyllable) {
+    syllables.push(currentSyllable);
+  }
+  
+  return syllables;
+}
 // Map để lưu trữ node văn bản gốc và nội dung gốc của nó
 const originalTextNodes = new Map<Text, string>();
 
-function getPseudoSyllables(text: string): string[] {
-  const vowels = "aeiouy";
-  const digraphs = [
-    "th",
-    "wh",
-    "qu",
-    "sp",
-    "st",
-    "tr",
-    "bl",
-    "cl",
-    "fl",
-    "pl",
-    "sl",
-    "br",
-    "cr",
-    "dr",
-    "fr",
-    "gr",
-    "pr",
-    "sw",
-    "tw",
-  ];
-
-  const syllables: string[] = [];
-  let i = 0;
-
-  while (i < text.length) {
-    // // Ưu tiên kiểm tra digraph trước
-    // const pair = text.substring(i, i + 2).toLowerCase();
-    // if (digraphs.includes(pair)) {
-    //     syllables.push(text.substring(i, i + 2));
-    //     i += 2;
-    //     continue;
-    // }
-
-    // Nếu là nguyên âm
-    if (vowels.includes(text[i].toLowerCase())) {
-      let syllable = text[i];
-      i++;
-
-      // Nếu tiếp tục là nguyên âm thì đây là nguyên âm đôi
-      if (i < text.length && vowels.includes(text[i].toLowerCase())) {
-        syllable += text[i];
-        i++;
-      }
-
-      if (digraphs.includes(text.substring(i, i + 2).toLowerCase())) {
-        syllables.push(syllable); // Ngừng gom nếu gặp digraph (không gom vào âm tiết)
-        continue;
-      }
-
-      // Gom thêm phụ âm sau nếu có
-      while (i < text.length && !vowels.includes(text[i].toLowerCase())) {
-        if (i + 1 < text.length && vowels.includes(text[i + 1].toLowerCase())) {
-          // Nếu gặp nguyên âm tiếp theo, dừng gom
-          break;
-        }
-
-        // Nếu gặp phụ âm đơn, gom thêm
-        syllable += text[i];
-        i++;
-
-        if (digraphs.includes(text.substring(i, i + 2).toLowerCase())) {
-          break; // Ngừng gom nếu gặp digraph (không gom vào âm tiết)
-        }
-      }
-
-      syllables.push(syllable);
-    } else {
-      // Nếu là phụ âm, gom tới khi gặp nguyên âm
-      let syllable = text[i];
-      i++;
-
-      while (i < text.length && !vowels.includes(text[i].toLowerCase())) {
-        syllable += text[i];
-        i++;
-      }
-
-      // Nếu nguyên âm đến ngay sau, gom luôn
-      if (i < text.length && vowels.includes(text[i].toLowerCase())) {
-        syllable += text[i];
-        i++;
-        // Nếu tiếp tục là nguyên âm thì đây là nguyên âm đôi
-        if (i < text.length && vowels.includes(text[i].toLowerCase())) {
-          syllable += text[i];
-          i++;
-        }
-      }
-
-      if (digraphs.includes(text.substring(i, i + 2).toLowerCase())) {
-        syllables.push(syllable); // Ngừng gom nếu gặp digraph (không gom vào âm tiết)
-        continue;
-      }
-
-      // Gom thêm phụ âm tiếp theo nếu có
-      while (i < text.length && !vowels.includes(text[i].toLowerCase())) {
-        if (i + 1 < text.length && vowels.includes(text[i + 1].toLowerCase())) {
-          // Nếu gặp nguyên âm tiếp theo, dừng gom
-          break;
-        }
-
-        syllable += text[i];
-        i++;
-
-        if (digraphs.includes(text.substring(i, i + 2).toLowerCase())) {
-          break; // Ngừng gom nếu gặp digraph (không gom vào âm tiết)
-        }
-      }
-
-      syllables.push(syllable);
-    }
-  }
-
-  return syllables;
+// Hàm để xác định màu cho một âm tiết dựa trên phonetic mapping
+function getColorForSyllable(syllable: string, position: number): string {
+  // Sử dụng vị trí của âm tiết để xác định màu, giúp tạo mẫu xen kẽ
+  return colorPalette[position % colorPalette.length];
 }
 
-// Hàm tô màu các "âm tiết" trong một node văn bản
+// Hàm tô màu một node văn bản dựa trên các nhóm phonetic
 function colorizeTextNode(node: Text) {
   const text: string = node.nodeValue || "";
-  // Tách từ nhưng giữ lại khoảng trắng bằng regex
   const wordsAndSpaces = text.split(/(\s+)/);
   const fragment = document.createDocumentFragment();
-  let colorIndex = 0;
-
+  
   wordsAndSpaces.forEach((part: string) => {
     if (part.match(/^\s+$/)) {
-      // Nếu là khoảng trắng, thêm text node khoảng trắng
+      // Preserve whitespace
       fragment.appendChild(document.createTextNode(part));
     } else if (part.length > 0) {
-      // Nếu là từ, chia và tô màu
-      const pseudoSyllables = getPseudoSyllables(part);
-
-      pseudoSyllables.forEach((syllable) => {
-        const span = document.createElement("span");
-        span.textContent = syllable;
-        span.style.color = colorPalette4[colorIndex % colorPalette4.length];
-        // Thêm class để dễ nhận diện khi tắt
-        span.classList.add("dyslexia-color-syllable");
-        colorIndex++; // Chuyển sang màu tiếp theo
-
-        fragment.appendChild(span);
-      });
+      const isWord = /[a-zA-Z0-9]/.test(part);
+      
+      if (isWord) {
+        // Split word into syllables
+        const syllables = splitIntoPseudoSyllables(part);
+        
+        // Apply alternating colors to syllables
+        syllables.forEach((syllable, index) => {
+          const span = document.createElement("span");
+          span.textContent = syllable;
+          
+          // Simple alternating color scheme
+          const colorIndex = index % colorPalette.length;
+          span.style.setProperty("color", colorPalette[colorIndex], "important");
+          span.classList.add("dyslexia-color-syllable");
+          fragment.appendChild(span);
+        });
+      } else {
+        // Preserve punctuation and other non-word characters
+        fragment.appendChild(document.createTextNode(part));
+      }
     }
   });
 
-  // Lưu trữ node gốc trước khi thay thế
+  // Store original node and text
   originalTextNodes.set(node, text);
-  // Thay thế node văn bản gốc bằng fragment đã được tô màu
+  
+  // Replace original node with the colored fragment
   node.parentNode?.replaceChild(fragment, node);
-
-  //Lưu thông tin vào storage
-  browser.storage.local.set({ proccessedText: text });
 }
 
 // Hàm khôi phục văn bản gốc từ các span đã tạo
@@ -301,12 +241,8 @@ function traverseAndProcess(node: Node, enable: boolean) {
       !(node.parentNode as Element).classList.contains("dyslexia-color-syllable")
     ) {
       if (enable) {
-        // Chỉ tô màu nếu chưa được lưu trữ (chưa được xử lý lần nào)
-        if (!originalTextNodes.has(node as Text)) {
-          colorizeTextNode(node as Text);
-        }
+        colorizeTextNode(node as Text);
       }
-      // Khôi phục được xử lý ở nhánh ELEMENT_NODE hoặc sau khi duyệt
     }
   } else {
     // Duyệt qua các node con
@@ -321,67 +257,92 @@ function traverseAndProcess(node: Node, enable: boolean) {
 // Hàm chính để bật/tắt mã màu
 function toggleColorCoding(enable: boolean) {
   if (enable) {
-    // Duyệt toàn bộ body để tìm text node và tô màu
+    // Color code all text nodes
     traverseAndProcess(document.body, true);
+    
+    // Add subtle enhancement style
+    let enhancementStyle = document.getElementById("dyslexia-enhancement-style");
+    if (!enhancementStyle) {
+      enhancementStyle = document.createElement("style");
+      enhancementStyle.id = "dyslexia-enhancement-style";
+      enhancementStyle.textContent = `
+        .dyslexia-color-syllable {
+          transition: all 0.2s ease-in-out;
+          display: inline-block;
+        }
+        .dyslexia-color-syllable:hover {
+          transform: scale(1.05);
+          font-weight: bold;
+        }
+      `;
+      document.head.appendChild(enhancementStyle);
+    }
   } else {
-    // Khi tắt, duyệt lại toàn bộ body để tìm các span đã tạo và khôi phục
-    // Cách khôi phục bằng cách duyệt lại và gọi restoreTextNode trên ELEMENT_NODE parent
+    // When disabling, restore all text nodes
     traverseAndProcess(document.body, false);
+    
+    // Remove enhancement style
+    const enhancementStyle = document.getElementById("dyslexia-enhancement-style");
+    if (enhancementStyle) {
+      enhancementStyle.remove();
+    }
 
-    // Sau khi duyệt, kiểm tra lại map để xử lý các text node gốc còn sót lại
-    // (trường hợp parent node bị loại bỏ hoặc logic khôi phục không tới)
+    // Final cleanup of any remaining nodes
     originalTextNodes.forEach((originalText, textNode) => {
       if (textNode.parentNode) {
-        // Tạo text node mới và thay thế parent của node gốc (nếu còn tồn tại)
         try {
           const newNode = document.createTextNode(originalText);
-          // Tìm vị trí của node gốc trong danh sách con của parent
-          const children = Array.from(textNode.parentNode.childNodes);
-          const index = children.indexOf(textNode);
-
-          if (index !== -1) {
-            textNode.parentNode.replaceChild(newNode, textNode);
-          } else {
-            // Nếu không tìm thấy node gốc trong danh sách con, chỉ thay thế
-            // (có thể parent đã thay đổi)
-            // Cách này có thể sai nếu node gốc không còn liên quan đến parent hiện tại
-            textNode.parentNode.replaceChild(newNode, textNode);
-          }
+          textNode.parentNode.replaceChild(newNode, textNode);
         } catch (e) {
-          console.error("Error during final restore:", e);
-          // Fallback: chỉ in nội dung gốc ra console
-          console.log("Could not restore node with text:", originalText, "Parent:", textNode.parentNode);
+          console.error("Error during text node restoration:", e);
         }
-      } else {
-        console.log("Original text node detached from DOM:", originalText);
       }
     });
-    originalTextNodes.clear(); // Xóa hết sau khi khôi phục
+    originalTextNodes.clear();
   }
 }
 
-// Có thể thêm MutationObserver để xử lý nội dung được tải động sau khi trang tải xong
-// Tuy nhiên, việc này làm phức tạp code hơn nhiều và cần xử lý cẩn thận để tránh vòng lặp vô hạn
-// hoặc hiệu suất kém trên các trang web phức tạp.
-
 export async function applyThemeToTab(tabId: number, enabled: boolean, theme?: string) {
+  console.log("applyThemeToTab", tabId, enabled, theme);
   const storage = await browser.storage.local.get(["theme", "textColor", "backgroundColor", "colorCodingEnabled"]);
-  const colorCodingEnabled = storage.colorCodingEnabled;
+  isColorCodingEnabled = storage.colorCodingEnabled as boolean;
 
   const currentTheme = theme || storage.theme;
   const textColor = getTextColorByHex(currentTheme as string);
   const backgroundColor = getBackgroundColor(currentTheme as string);
 
-  if (!enabled || currentTheme === "default") {
+  if (!enabled) {
     await browser.scripting.executeScript({
       target: { tabId },
       func: () => {
-        document.body.style.backgroundColor = "";
-        document.body.style.color = "";
+        // Remove the overlay if it exists
+        const overlay = document.getElementById("theme-extension-overlay");
+        if (overlay) {
+          overlay.remove();
+        }
+        
+        // Remove the style element
+        const styleElement = document.getElementById("theme-extension-styles");
+        if (styleElement) {
+          styleElement.remove();
+        }
+        
+        // Remove the enhancement style
+        const enhancementStyle = document.getElementById("dyslexia-enhancement-style");
+        if (enhancementStyle) {
+          enhancementStyle.remove();
+        }
+        
+        // Reset the entire page's styles
+        document.documentElement.style.removeProperty("background-color");
+        document.body.style.removeProperty("background-color");
+        document.body.style.removeProperty("color");
+        
+        // Reset any element-specific overrides
         document.querySelectorAll("*").forEach((el) => {
-          if (el instanceof HTMLElement && !el.classList.contains("dyslexia-color-syllable")) {
-            el.style.backgroundColor = "";
-            el.style.color = "";
+          if (el instanceof HTMLElement) {
+            el.style.removeProperty("color");
+            el.style.removeProperty("background-color");
           }
         });
       },
@@ -392,14 +353,6 @@ export async function applyThemeToTab(tabId: number, enabled: boolean, theme?: s
       textColor,
       backgroundColor,
     });
-
-    // Nếu đang bật color coding, gửi lại sau applyColors để đảm bảo màu syllable giữ nguyên
-    if (colorCodingEnabled && enabled) {
-      await browser.tabs.sendMessage(tabId, {
-        action: "setColorCoding",
-        enabled: true,
-      });
-    }
   }
 
   // Lưu nếu có theme mới
@@ -412,9 +365,9 @@ export async function applyThemeToTab(tabId: number, enabled: boolean, theme?: s
   }
 }
 
-export async function applyColorCodingToTab(tabId: number, enabled: boolean) {
+export async function applyColorCodingToTab(tabId: number, colorCodingEnabled: boolean) {
   await browser.tabs.sendMessage(tabId, {
     action: "setColorCoding",
-    enabled,
+    colorCodingEnabled,
   });
 }

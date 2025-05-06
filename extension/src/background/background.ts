@@ -14,12 +14,12 @@ export interface ToggleMessage extends BaseMessage {
   enabled: boolean;
 }
 
-export interface StyleMessage {
-  fontSize?: number;
-  letterSpacing?: number;
-  lineHeight?: number;
-  wordSpacing?: number;
-  fontFamily?: string;
+export interface StyleMessage extends ToggleMessage {
+  fontSize: number;
+  letterSpacing: number;
+  lineHeight: number;
+  wordSpacing: number;
+  fontFamily: string;
 }
 
 export interface RulerMessage extends BaseMessage {
@@ -97,49 +97,68 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
+browser.runtime.onMessage.addListener((message: BaseMessage) => {
+  if (message.action === "fetchAllFeaturesEnabled") {
+    browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+      const tabId = tabs[0]?.id;
+      if (tabId) {
+        fetchAllFeaturesEnabled(tabId);
+      }
+    });
+  }
+});
+
+function fetchAllFeaturesEnabled(tabId) {
+  browser.storage.local
+    .get([
+      "extensionEnabled",
+      "fontSize",
+      "letterSpacing",
+      "fontFamily",
+      "lineHeight",
+      "wordSpacing",
+      "ruler",
+      "rulerHeight",
+      "rulerOpacity",
+      "rulerColor",
+      "colorCodingEnabled",
+    ])
+    .then((result) => {
+      const textStyleMessage: StyleMessage = {
+        action: "setTextStyle",
+        enabled: result.extensionEnabled as boolean,
+        fontSize: result.fontSize as number,
+        letterSpacing: result.letterSpacing as number,
+        fontFamily: result.fontFamily as string,
+        lineHeight: result.lineHeight as number,
+        wordSpacing: result.wordSpacing as number,
+      };
+
+      applyThemeToTab(tabId, result.extensionEnabled as boolean).then(() => {
+        applyColorCodingToTab(tabId, result.colorCodingEnabled as boolean);
+      });
+
+      const rulerMessage: RulerMessage = {
+        action: "recreateRuler",
+        config: {
+          ruler: result.ruler as boolean,
+          rulerHeight: result.rulerHeight as number,
+          rulerOpacity: result.rulerOpacity as number,
+          rulerColor: result.rulerColor as string,
+        },
+      };
+
+      browser.tabs.sendMessage(tabId, textStyleMessage);
+
+      browser.tabs.sendMessage(tabId, rulerMessage);
+    });
+}
+
 // auto enable/disable distraction when reload or open new tab
 browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === "complete") {
-    browser.storage.local
-      .get([
-        "removeDistractions",
-        "extensionEnabled",
-        "colorCodingEnabled",
-        "ruler",
-        "rulerHeight",
-        "rulerOpacity",
-        "rulerColor",
-      ])
-      .then((result) => {
-        const removeDistractionsMessage: ToggleMessage = {
-          action: "setRemoveDistractions",
-          enabled: (result.removeDistractions as boolean) && (result.extensionEnabled as boolean),
-        };
-
-        const textStyleMessage: ToggleMessage = {
-          action: "setTextStyle",
-          enabled: result.extensionEnabled as boolean,
-        };
-
-        applyThemeToTab(tabId, result.extensionEnabled as boolean).then(() => {
-          applyColorCodingToTab(tabId, (result.colorCodingEnabled as boolean) && (result.extensionEnabled as boolean));
-        });
-
-        const rulerMessage: RulerMessage = {
-          action: "updateRuler",
-          config: {
-            ruler: result.ruler as boolean,
-            rulerHeight: result.rulerHeight as number,
-            rulerOpacity: result.rulerOpacity as number,
-            rulerColor: result.rulerColor as string,
-          },
-        };
-
-        sendToggleMessage(tabId, removeDistractionsMessage);
-        sendToggleMessage(tabId, textStyleMessage);
-
-        browser.tabs.sendMessage(tabId, rulerMessage);
-      });
+    browser.storage.local.set({ removeDistractions: false });
+    fetchAllFeaturesEnabled(tabId);
   }
 });
 
@@ -148,7 +167,11 @@ browser.runtime.onMessage.addListener(async (message) => {
     const result = await browser.storage.local.get([
       "removeDistractions",
       "extensionEnabled",
-      "colorCodingEnabled",
+      "fontSize",
+      "letterSpacing",
+      "fontFamily",
+      "lineHeight",
+      "wordSpacing",
       "ruler",
       "rulerHeight",
       "rulerOpacity",
@@ -161,7 +184,6 @@ browser.runtime.onMessage.addListener(async (message) => {
       rulerOpacity: result.rulerOpacity as number,
       rulerColor: result.rulerColor as string,
     };
-    const colorCodingEnabled = result.colorCodingEnabled as boolean;
     if (!message.enabled) {
       browser.contextMenus.removeAll();
       if (removeDistractions) {
@@ -182,24 +204,49 @@ browser.runtime.onMessage.addListener(async (message) => {
       browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
         const tabId = tabs[0]?.id;
         if (tabId) {
-          const textStyleMessage: ToggleMessage = {
+          const textStyleMessage: StyleMessage = {
             action: "setTextStyle",
-            enabled: false,
+            enabled: result.extensionEnabled as boolean,
+            fontSize: result.fontSize as number,
+            letterSpacing: result.letterSpacing as number,
+            fontFamily: result.fontFamily as string,
+            lineHeight: result.lineHeight as number,
+            wordSpacing: result.wordSpacing as number,
           };
 
           const rulerMessage: RulerMessage = {
             action: "updateRuler",
             config: { ...rulerConfig, ruler: false },
           };
-          sendToggleMessage(tabId, textStyleMessage);
           browser.tabs.sendMessage(tabId, rulerMessage);
-          applyThemeToTab(tabId, false).then(() => {
-            applyColorCodingToTab(tabId, false);
-          });
+          browser.tabs.sendMessage(tabId, textStyleMessage);
+          applyThemeToTab(tabId, false);
         }
       });
     } else {
       browser.contextMenus.removeAll().then(createContextMenus);
+
+      // Enable text style
+      browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+        const tabId = tabs[0]?.id;
+        if (tabId) {
+          const message: ToggleMessage = {
+            action: "setTextStyle",
+            enabled: true,
+          };
+          sendToggleMessage(tabId, message);
+
+          if (rulerConfig.ruler) {
+            const rulerMessage: RulerMessage = {
+              action: "recreateRuler",
+              config: rulerConfig,
+            };
+            browser.tabs.sendMessage(tabId, rulerMessage);
+          }
+          applyThemeToTab(tabId, true);
+        }
+      });
+
       if (removeDistractions) {
         // Enable distraction-free mode
         browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
@@ -213,30 +260,6 @@ browser.runtime.onMessage.addListener(async (message) => {
           }
         });
       }
-      // Enable text style
-      browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-        const tabId = tabs[0]?.id;
-        if (tabId) {
-          const message: ToggleMessage = {
-            action: "setTextStyle",
-            enabled: true,
-          };
-          sendToggleMessage(tabId, message);
-
-          if (rulerConfig.ruler) {
-            const rulerMessage: RulerMessage = {
-              action: "updateRuler",
-              config: rulerConfig,
-            };
-            browser.tabs.sendMessage(tabId, rulerMessage);
-          }
-          applyThemeToTab(tabId, true).then(() => {
-            if (colorCodingEnabled) {
-              applyColorCodingToTab(tabId, true);
-            }
-          });
-        }
-      });
     }
   }
 });
@@ -244,7 +267,7 @@ browser.runtime.onMessage.addListener(async (message) => {
 // Set default values when the extension is installed
 browser.runtime.onInstalled.addListener(() => {
   browser.storage.local.set({
-    ruler: true,
+    ruler: false,
     rulerHeight: 25,
     rulerOpacity: 50,
     rulerColor: "#d9d9d9",

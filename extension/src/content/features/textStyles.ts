@@ -97,17 +97,15 @@ function applyClassStyles() {
   document.documentElement.classList.add("readability-mode");
 }
 
-function enableTextStyle() {
-  browser.storage.local.get(["fontSize", "letterSpacing", "lineHeight", "wordSpacing", "fontFamily"]).then((result) => {
-    updateStyles({
-      fontSize: result.fontSize as number | undefined,
-      letterSpacing: result.letterSpacing as number | undefined,
-      lineHeight: result.lineHeight as number | undefined,
-      wordSpacing: result.wordSpacing as number | undefined,
-      fontFamily: result.fontFamily as string | undefined,
-    });
-    applyClassStyles();
+function enableTextStyle(message: StyleMessage) {
+  updateStyles({
+    fontSize: message.fontSize as number | undefined,
+    letterSpacing: message.letterSpacing as number | undefined,
+    lineHeight: message.lineHeight as number | undefined,
+    wordSpacing: message.wordSpacing as number | undefined,
+    fontFamily: message.fontFamily as string | undefined,
   });
+  applyClassStyles();
 }
 
 function disableTextStyle() {
@@ -128,10 +126,10 @@ function disableTextStyle() {
   }
 }
 
-browser.runtime.onMessage.addListener((message: ToggleMessage) => {
+browser.runtime.onMessage.addListener((message: StyleMessage) => {
   if (message.action === "setTextStyle") {
     if (message.enabled) {
-      enableTextStyle();
+      enableTextStyle(message);
     } else {
       disableTextStyle();
     }

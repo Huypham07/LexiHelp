@@ -25,12 +25,15 @@ function createRuler() {
 
 // Update ruler styles based on config
 function updateRuler(config: RulerConfig) {
-  if (!ruler) createRuler();
-  if (ruler) {
+  if (config.ruler) {
+    if (!ruler) createRuler();
     ruler.style.display = config.ruler ? "block" : "none";
     ruler.style.height = `${config.rulerHeight}px`;
     ruler.style.opacity = `${config.rulerOpacity / 100}`;
     ruler.style.backgroundColor = config.rulerColor;
+  } else {
+    if (ruler) ruler.style.display = "none";
+    ruler = null;
   }
 }
 
@@ -43,7 +46,11 @@ document.addEventListener("mousemove", (e) => {
 
 // Listen for messages from popup
 browser.runtime.onMessage.addListener((message: RulerMessage) => {
-    if (message.action === "updateRuler") {
+  if (message.action === "updateRuler") {
+    updateRuler(message.config);
+  } else if (message.action === "recreateRuler") {
+    if (ruler) ruler.style.display = "none";
+    ruler = null;
     updateRuler(message.config);
   }
 });
