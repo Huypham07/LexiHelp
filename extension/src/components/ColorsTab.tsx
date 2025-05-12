@@ -2,7 +2,7 @@ import { Label } from "./ui/label";
 import ThemeOption from "./ThemeOption";
 import React from "react";
 import { Button } from "./ui/button";
-import { getBackgroundColor } from "@/utils/utils";
+import { getBackgroundColor } from "@/utils/color";
 
 interface ColorsTabProps {
   colorTheme: string;

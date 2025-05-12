@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { getTextColorByHex } from "@/utils/utils";
+import { getTextColorByHex } from "@/utils/color";
 import React from "react";
 
 interface ThemeOptionProps {
